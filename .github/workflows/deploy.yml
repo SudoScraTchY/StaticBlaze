@@ -1,0 +1,80 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ['content/**', 'src/**', 'styles/**', '.github/workflows/deploy.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test
+        run: dotnet test
+
+      - name: Install Tailwind CLI
+        run: npm ci --prefix tools/node-tools
+
+      - name: Build site CSS
+        run: >
+          node tools/node-tools/node_modules/@tailwindcss/cli/dist/index.mjs
+          -i styles/site.css -o dist-assets/site.css --minify
+
+      - name: Build admin CSS
+        run: >
+          node tools/node-tools/node_modules/@tailwindcss/cli/dist/index.mjs
+          -i styles/admin.css -o src/StaticBlaze.Admin/wwwroot/assets/admin.css --minify
+
+      - name: Generate site
+        run: dotnet run --project src/StaticBlaze.Generator -- --content content --out dist
+
+      - name: Publish admin
+        run: dotnet publish src/StaticBlaze.Admin -c Release -o admin-published
+
+      - name: Assemble Pages artifact
+        run: |
+          # serve the admin under the project-pages subpath
+          sed -i 's|<base href="/" />|<base href="/StaticBlaze/admin/" />|' admin-published/wwwroot/index.html
+          cp dist-assets/site.css dist/assets/site.css
+          mkdir -p dist/admin
+          cp -r admin-published/wwwroot/* dist/admin/
+          echo > dist/.nojekyll
+          # custom domain: echo "your.domain" > dist/CNAME
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

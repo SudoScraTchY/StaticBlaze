@@ -1,0 +1,102 @@
+/*
+  StaticBlaze shared design tokens - Persian palette.
+  Sources: alijsh/persian-colors (ISCC-NBS hex values) + cyruscrafts Persian colors article.
+  Structure: Swiss/blueprint discipline. Ink: one accent per theme. No default-looking
+  blue-purple gradients; the single permitted gradient is the lajvard→firouzeh tile transition,
+  used sparingly (wordmark rule + focus ring only).
+*/
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/plex-sans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/fonts/plex-sans-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/fonts/plex-sans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/plex-sans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/plex-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/fonts/plex-mono-500.woff2") format("woff2");
+}
+
+:root {
+  /* light theme: miniature paper, tile-azure ink (#0067A5 persian-blue-strong) */
+  --bg: #f6f1e7;
+  --surface: #fdfbf6;
+  --fg: #23283a;
+  --muted: #5c6178;
+  --line: rgb(76 81 109 / 0.28);
+  --line-soft: rgb(76 81 109 / 0.14);
+  --accent: #0067a5;
+  --accent-ink: #00527f;
+  --accent-soft: rgb(0 103 165 / 0.08);
+  --gold: #b35c00; /* zafaran darkened for text contrast on paper */
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  /* dark theme: surmaj night, firouzeh ink (#57C5C6 turquoise) */
+  --bg: #0f1420;
+  --surface: #151c2c;
+  --fg: #e8e4d8;
+  --muted: #8b92a8;
+  --line: rgb(76 81 109 / 0.45);
+  --line-soft: rgb(76 81 109 / 0.22);
+  --accent: #57c5c6;
+  --accent-ink: #7dd4d5;
+  --accent-soft: rgb(87 197 198 / 0.1);
+  --gold: #f38400; /* zafaran #F38400 persian-orange-vivid */
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-zafaran: #f38400;
+  --color-firouzeh: #00a693;
+  --color-firouzeh-light: #57c5c6;
+  --color-tile: #0067a5;
+  --color-lajvard: #1c39bb;
+  --color-pomegranate: #cc3333;
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}

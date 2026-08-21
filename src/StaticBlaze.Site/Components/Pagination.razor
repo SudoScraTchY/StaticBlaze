@@ -1,0 +1,31 @@
+@* Prev/next pagination over static /page/n/ URLs. *@
+@if (TotalPages > 1)
+{
+    <nav class="mt-12 flex items-center justify-between font-mono text-xs" aria-label="pagination">
+        @if (Page > 1)
+        {
+            <a href="@Href(Page - 1)" class="text-accent hover:underline underline-offset-4">← prev</a>
+        }
+        else
+        {
+            <span class="text-muted/50">← prev</span>
+        }
+        <span class="text-muted">@Page / @TotalPages</span>
+        @if (Page < TotalPages)
+        {
+            <a href="@Href(Page + 1)" class="text-accent hover:underline underline-offset-4">next →</a>
+        }
+        else
+        {
+            <span class="text-muted/50">next →</span>
+        }
+    </nav>
+}
+
+@code {
+    [Parameter] public required int Page { get; set; }
+    [Parameter] public required int TotalPages { get; set; }
+    [Parameter] public required string BasePath { get; set; }
+
+    private string Href(int page) => page <= 1 ? BasePath : $"{BasePath.TrimEnd('/')}/page/{page}/";
+}

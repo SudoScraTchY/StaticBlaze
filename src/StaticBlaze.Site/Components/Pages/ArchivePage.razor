@@ -1,0 +1,33 @@
+@* Chronological index, grouped by year: mono date rows. *@
+<SitePage Site=@Site Title="Archive" Description="@($"Every post on {Site.Title}, newest first")" Canonical="/archive/">
+        <h1 class="section-label mb-8" data-n="02">archive</h1>
+        @foreach (var group in Posts.GroupBy(p => p.Published.Year).OrderByDescending(g => g.Key))
+        {
+            <section class="mb-10">
+                <h2 class="font-mono text-sm text-gold tracking-widest mb-3">@group.Key</h2>
+                <ul class="border-t border-line">
+                    @foreach (var post in group)
+                    {
+                        <li class="border-b border-line">
+                            <a href="@(Base + post.Url)" class="group flex items-baseline gap-4 py-3 px-1 hover:bg-accent-soft transition-colors duration-150">
+                                <span class="title-block shrink-0 w-20">@post.Published.ToString("MM-dd")</span>
+                                <span class="group-hover:text-accent transition-colors duration-150 font-medium truncate">@post.Title</span>
+                                <span class="title-block ml-auto shrink-0 hidden sm:inline">@post.ReadTimeMinutes min</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        @if (Posts.Count == 0)
+        {
+            <p class="text-muted">Nothing published yet.</p>
+        }
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required IReadOnlyList<PostSummary> Posts { get; set; }
+
+    private string Base => Site.BasePath;
+}

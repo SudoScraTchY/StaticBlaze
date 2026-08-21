@@ -1,0 +1,99 @@
+<SitePage Site=@Site Title=@Post.Title Description=@Post.Frontmatter.Description Canonical=@Post.Url OgType="article" OgImage=@Post.Frontmatter.Thumbnail JsonLd=@JsonLd>
+        <article class="max-w-2xl mx-auto">
+            <header class="mb-10">
+                <p class="title-block flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
+                    <a href="@(B)/categories/@Post.Frontmatter.Category/" class="hover:text-accent transition-colors duration-150 text-accent">@CategoryTitle</a>
+                    <span class="text-line-soft">|</span>
+                    <span>@Post.Frontmatter.Published.ToString("yyyy-MM-dd")</span>
+                    <span class="text-line-soft">|</span>
+                    <span>@Post.ReadTimeMinutes min read</span>
+                    @if (Post.Frontmatter.Modified is { } modified)
+                    {
+                        <span class="text-line-soft">|</span>
+                        <span>updated @modified.ToString("yyyy-MM-dd")</span>
+                    }
+                </p>
+                <h1 class="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">@Post.Title</h1>
+                @if (Author is not null)
+                {
+                    <p class="title-block mt-4">
+                        <a href="@(B)/authors/@Author.Handle/" class="hover:text-accent transition-colors duration-150">@@@Author.Handle</a>
+                    </p>
+                }
+                <div class="tile-rule mt-6 opacity-70" aria-hidden="true"></div>
+            </header>
+
+            @if (Post.Frontmatter.Thumbnail is { } thumb)
+            {
+                <img src="@(B)/@thumb" alt="@Post.Title" class="w-full border border-line rounded mb-10" loading="lazy" />
+            }
+
+            <div class="post-body">@((MarkupString)Post.Html)</div>
+
+            @if (Post.Frontmatter.Tags.Count > 0)
+            {
+                <div class="mt-12 pt-6 border-t border-line flex flex-wrap gap-2">
+                    @foreach (var tag in Post.Frontmatter.Tags)
+                    {
+                        <a href="@(B)/tags/@tag/" class="font-mono text-xs text-muted border border-line-soft rounded-sm px-2.5 py-1 hover:text-accent hover:border-accent transition-colors duration-150">#@tag</a>
+                    }
+                </div>
+            }
+
+            @if (Author is not null)
+            {
+                <aside class="mt-12 border border-line rounded bg-surface p-6 flex gap-5 items-start">
+                    @if (Author.Avatar is { } avatar)
+                    {
+                        <img src="@(B)/@avatar" alt=@Author.Name class="size-14 rounded border border-line object-cover" loading="lazy" />
+                    }
+                    <div class="min-w-0">
+                        <p class="font-semibold">@Author.Name <span class="title-block font-normal">· @Author.Handle</span></p>
+                        @if (!string.IsNullOrEmpty(Author.Bio))
+                        {
+                            <p class="text-sm text-muted mt-1 leading-relaxed">@Author.Bio</p>
+                        }
+                        @if (Author.Website is { } site)
+                        {
+                            <a href="@site" rel="me" class="inline-block mt-2 font-mono text-xs text-accent hover:underline underline-offset-4">@site</a>
+                        }
+                    </div>
+                </aside>
+            }
+
+            @if (Related.Count > 0)
+            {
+                <section class="mt-14">
+                    <h2 class="section-label mb-6" data-n="03">related</h2>
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach (var related in Related)
+                        {
+                            <PostCard Post=@related Base=@B />
+                        }
+                    </div>
+                </section>
+            }
+        </article>
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required Post Post { get; set; }
+    [Parameter] public AuthorRecord? Author { get; set; }
+    [Parameter] public string CategoryTitle { get; set; } = "";
+    [Parameter] public required IReadOnlyList<PostSummary> Related { get; set; }
+
+    private string B => Site.BasePath;
+
+    private string JsonLd => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "BlogPosting",
+        ["headline"] = Post.Title,
+        ["description"] = Post.Frontmatter.Description,
+        ["datePublished"] = Post.Frontmatter.Published.ToString("yyyy-MM-ddTHH:mm:ssK"),
+        ["dateModified"] = (Post.Frontmatter.Modified ?? Post.Frontmatter.Published).ToString("yyyy-MM-ddTHH:mm:ssK"),
+        ["author"] = new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = Author?.Name ?? Post.Frontmatter.Author },
+        ["mainEntityOfPage"] = Site.Url.TrimEnd('/') + Post.Url,
+    }, StaticBlazeJson.Options);
+}

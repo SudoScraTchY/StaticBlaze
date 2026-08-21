@@ -1,0 +1,64 @@
+<SitePage Site=@Site Title="Home" Description=@Site.Description Canonical=@CanonicalPath JsonLd=@JsonLd>
+        @if (Page == 1)
+        {
+            <section class="mb-16">
+                <p class="section-label mb-6" data-n="00">@Site.Title.ToLowerInvariant()</p>
+                <h1 class="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1] max-w-2xl">@HeroLine</h1>
+                <p class="mt-5 text-muted max-w-xl leading-relaxed">@Site.Description</p>
+                <div class="tile-rule mt-8 max-w-56" aria-hidden="true"></div>
+                <p class="title-block mt-4">@Posts.Count posts · @TagCount tags · est. @OldestYear</p>
+            </section>
+
+            @if (Featured.Count > 0)
+            {
+                <section class="mb-14">
+                    <h2 class="section-label mb-6" data-n="01">featured</h2>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        @foreach (var post in Featured)
+                        {
+                            <PostCard Post=@post Base=@B />
+                        }
+                    </div>
+                </section>
+            }
+
+            <h2 class="section-label mb-6" data-n="02">latest</h2>
+        }
+        else
+        {
+            <h1 class="section-label mb-8" data-n="02">latest · page @Page</h1>
+        }
+
+        <div class="grid sm:grid-cols-2 gap-4">
+            @foreach (var post in Posts)
+            {
+                <PostCard Post=@post Base=@B />
+            }
+        </div>
+
+        <Pagination Page=@Page TotalPages=@TotalPages BasePath=@($"{B}/") />
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required int Page { get; set; }
+    [Parameter] public required int TotalPages { get; set; }
+    [Parameter] public required IReadOnlyList<PostSummary> Posts { get; set; }
+    [Parameter] public required IReadOnlyList<PostSummary> Featured { get; set; }
+    [Parameter] public required IReadOnlyList<PostSummary> AllPosts { get; set; }
+    [Parameter] public required int TagCount { get; set; }
+
+    private string CanonicalPath => Page <= 1 ? "/" : $"/page/{Page}/";
+    private string B => Site.BasePath;
+    private string HeroLine => Site.Title;
+    private int OldestYear => AllPosts.Count > 0 ? AllPosts.Min(p => p.Published).Year : DateTimeOffset.UtcNow.Year;
+
+    private string JsonLd => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "WebSite",
+        ["name"] = Site.Title,
+        ["description"] = Site.Description,
+        ["url"] = Site.Url,
+    }, StaticBlazeJson.Options);
+}

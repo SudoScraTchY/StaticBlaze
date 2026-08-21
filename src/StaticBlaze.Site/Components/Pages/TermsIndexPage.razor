@@ -1,0 +1,31 @@
+@* Tag or category index: every term with its live post count. *@
+<SitePage Site=@Site Title=@Label Description="@($"All {Label.ToLowerInvariant()} on {Site.Title}")" Canonical=@CanonicalPath>
+        <h1 class="section-label mb-8" data-n="01">@Label.ToLowerInvariant()</h1>
+        <ul class="border-t border-line">
+            @foreach (var term in Terms)
+            {
+                <li class="border-b border-line">
+                    <a href="@(B)/@Kind/@term.Slug/" class="group flex items-baseline justify-between gap-4 py-3.5 px-1 hover:bg-accent-soft transition-colors duration-150">
+                        <span class="flex items-baseline gap-3 min-w-0">
+                            <span class="group-hover:text-accent transition-colors duration-150 font-medium truncate">@term.Title</span>
+                            @if (!string.IsNullOrEmpty(term.Description))
+                            {
+                                <span class="text-sm text-muted truncate hidden sm:inline">· @term.Description</span>
+                            }
+                        </span>
+                        <span class="title-block shrink-0">@term.Count</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required string Kind { get; set; }   // "tags" | "categories"
+    [Parameter] public required string Label { get; set; }  // "Tags" | "Categories"
+    [Parameter] public required IReadOnlyList<TermCount> Terms { get; set; }
+
+    private string CanonicalPath => $"/{Kind}/";
+    private string B => Site.BasePath;
+}

@@ -1,0 +1,35 @@
+@* Posts filed under one tag or category. *@
+<SitePage Site=@Site Title="@($"{Label}: {Term.Title}")" Description=@Term.Description Canonical=@CanonicalPath>
+        <header class="mb-10">
+            <p class="title-block mb-3"><a href="@(B)/@Kind/" class="hover:text-accent transition-colors duration-150">@Label.ToLowerInvariant()</a> / @Count posts</p>
+            <h1 class="text-3xl font-bold tracking-tight">@Term.Title</h1>
+            @if (!string.IsNullOrEmpty(Term.Description))
+            {
+                <p class="text-muted mt-3 max-w-xl leading-relaxed">@Term.Description</p>
+            }
+            <div class="tile-rule mt-6 max-w-56 opacity-70" aria-hidden="true"></div>
+        </header>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+            @foreach (var post in Posts)
+            {
+                <PostCard Post=@post Base=@B />
+            }
+        </div>
+
+        <Pagination Page=@Page TotalPages=@TotalPages BasePath=@($"{B}/{Kind}/{Term.Slug}/") />
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required string Kind { get; set; }
+    [Parameter] public required string Label { get; set; }
+    [Parameter] public required TaxonomyTerm Term { get; set; }
+    [Parameter] public required int Count { get; set; }
+    [Parameter] public required IReadOnlyList<PostSummary> Posts { get; set; }
+    [Parameter] public required int Page { get; set; }
+    [Parameter] public required int TotalPages { get; set; }
+
+    private string B => Site.BasePath;
+    private string CanonicalPath => Page <= 1 ? $"/{Kind}/{Term.Slug}/" : $"/{Kind}/{Term.Slug}/page/{Page}/";
+}

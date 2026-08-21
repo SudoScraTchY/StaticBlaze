@@ -1,0 +1,46 @@
+<SitePage Site=@Site Title=@Author.Name Description=@Author.Bio Canonical=@CanonicalPath>
+        <header class="mb-10">
+            <p class="title-block mb-3"><a href="@(B)/about/" class="hover:text-accent transition-colors duration-150">about</a> / @Posts.Count posts</p>
+            <div class="flex items-center gap-5">
+                @if (Author.Avatar is { } avatar)
+                {
+                    <img src="@(B)/@avatar" alt=@Author.Name class="size-20 rounded border border-line object-cover" />
+                }
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight">@Author.Name</h1>
+                    <p class="title-block mt-2">@@@Author.Handle</p>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(Author.Bio))
+            {
+                <p class="text-muted mt-4 max-w-xl leading-relaxed">@Author.Bio</p>
+            }
+            <div class="mt-4 flex flex-wrap gap-4 font-mono text-xs">
+                @if (Author.Website is { } website)
+                {
+                    <a href=@website rel="me" class="text-accent hover:underline underline-offset-4">website</a>
+                }
+                @foreach (var (network, handle) in Author.Social)
+                {
+                    <a href="https://@(network is "x" ? "x.com" : network + ".com")/@handle" rel="me" class="text-accent hover:underline underline-offset-4">@network</a>
+                }
+            </div>
+            <div class="tile-rule mt-6 max-w-56 opacity-70" aria-hidden="true"></div>
+        </header>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+            @foreach (var post in Posts)
+            {
+                <PostCard Post=@post Base=@B />
+            }
+        </div>
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required AuthorRecord Author { get; set; }
+    [Parameter] public required IReadOnlyList<PostSummary> Posts { get; set; }
+
+    private string B => Site.BasePath;
+    private string CanonicalPath => $"/authors/{Author.Handle}/";
+}

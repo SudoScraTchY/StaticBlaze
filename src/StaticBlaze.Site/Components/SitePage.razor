@@ -1,0 +1,115 @@
+@* Full-document shell for every generated page. Renders the entire html document;
+   the generator supplies all data as parameters. No router, no NavigationManager. *@
+<!DOCTYPE html>
+<html lang="@Site.Language" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Title · @Site.Title</title>
+    <meta name="description" content="@Description" />
+    <link rel="canonical" href="@Combined(Site.Url, Canonical)" />
+    @if (OgImage is not null)
+    {
+        <meta property="og:image" content="@Combined(Site.Url, OgImage)" />
+    }
+    <meta property="og:type" content="@OgType" />
+    <meta property="og:site_name" content="@Site.Title" />
+    <meta property="og:title" content="@Title" />
+    <meta property="og:description" content="@Description" />
+    <meta property="og:url" content="@Combined(Site.Url, Canonical)" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="alternate" type="application/rss+xml" title="@Site.Title" href="@Combined(Site.Url, "/rss.xml")" />
+    <link rel="stylesheet" href="@(B)/assets/site.css" />
+    @((MarkupString)NoFlashScript)
+    @if (JsonLd is not null)
+    {
+        <script type="application/ld+json">@((MarkupString)JsonLd)</script>
+    }
+</head>
+<body class="bg-bg text-fg font-sans min-h-screen flex flex-col">
+    <header class="border-b border-line">
+        <div class="mx-auto max-w-4xl px-5 sm:px-8">
+            <div class="flex h-16 items-center justify-between gap-4">
+                <a href="@(B)/" class="group flex items-center gap-3" aria-label="@Site.Title home">
+                    <svg class="size-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path d="M12 2.5 20.2 7.25v9.5L12 21.5 3.8 16.75v-9.5L12 2.5Z" />
+                        <path d="M12 7.5 16 9.75v4.5L12 16.5 8 14.25v-4.5L12 7.5Z" />
+                    </svg>
+                    <span class="font-mono text-sm tracking-wider lowercase">@Wordmark</span>
+                </a>
+                <nav class="hidden sm:flex items-center gap-6 font-mono text-xs tracking-widest uppercase" aria-label="primary">
+                    @foreach (var link in Site.Nav)
+                    {
+                        <a href="@(B + link.Href)" class="@(IsActive(link.Href) ? "text-accent" : "text-muted") hover:text-accent transition-colors duration-150">@link.Label</a>
+                    }
+                </nav>
+                <div class="flex items-center gap-3">
+                    <div class="relative hidden md:block" data-search>
+                        <input type="search" data-search-input placeholder="search…" autocomplete="off"
+                               class="w-44 font-mono text-xs bg-transparent border border-line rounded px-3 py-1.5 text-fg placeholder:text-muted focus:outline-none focus:border-accent" />
+                        <div data-search-panel class="search-panel hidden z-50"></div>
+                    </div>
+                    <button type="button" data-theme-toggle aria-label="toggle theme"
+                            class="p-2 text-muted hover:text-accent transition-colors duration-150">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-icon="moon">
+                            <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" />
+                        </svg>
+                        <svg class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-icon="sun">
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <nav class="sm:hidden flex items-center gap-5 border-t border-line-soft py-3 font-mono text-xs tracking-widest uppercase" aria-label="mobile">
+                @foreach (var link in Site.Nav)
+                {
+                    <a href="@(B + link.Href)" class="text-muted">@link.Label</a>
+                }
+            </nav>
+        </div>
+        <div class="tile-rule opacity-60" aria-hidden="true"></div>
+    </header>
+
+    <main class="flex-1 mx-auto w-full max-w-4xl px-5 sm:px-8 py-10 sm:py-14">
+        @ChildContent
+    </main>
+
+    <footer class="border-t border-line">
+        <div class="mx-auto max-w-4xl px-5 sm:px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs text-muted">
+            <span>@@@Wordmark · built with <a href="https://github.com/SudoScraTchY/StaticBlaze" class="text-accent hover:underline underline-offset-4">StaticBlaze</a></span>
+            <span class="flex items-center gap-4">
+                <a href="@(B)/rss.xml" class="hover:text-accent transition-colors duration-150">rss</a>
+                <a href="@(B)/sitemap.xml" class="hover:text-accent transition-colors duration-150">sitemap</a>
+                <a href="@(B)/admin/" class="hover:text-accent transition-colors duration-150">admin</a>
+            </span>
+        </div>
+    </footer>
+
+    <script type="module" src="@(B)/assets/site.js"></script>
+</body>
+</html>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public required string Title { get; set; }
+    [Parameter] public required string Description { get; set; }
+    [Parameter] public required string Canonical { get; set; }
+    [Parameter] public string? OgType { get; set; } = "website";
+    [Parameter] public string? OgImage { get; set; }
+    [Parameter] public string? JsonLd { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string B => Site.BasePath;
+    private string Wordmark => string.IsNullOrWhiteSpace(Site.Wordmark) ? Site.Title.ToLowerInvariant() : Site.Wordmark;
+
+    private static string Combined(string baseUrl, string path) =>
+        baseUrl.TrimEnd('/') + (path.StartsWith('/') ? path : "/" + path);
+
+    private bool IsActive(string href) =>
+        href == "/" ? Canonical == "/" : Canonical.StartsWith(href, StringComparison.OrdinalIgnoreCase);
+
+    // Runs before first paint; brand default is dark ("late night"), visitor can override.
+    private string NoFlashScript =>
+        $$"""<script>(function(){var t=localStorage.getItem('sb-theme')||'dark';document.documentElement.setAttribute('data-theme',t);window.SB_BASE={{System.Text.Json.JsonSerializer.Serialize(B)}})()</script>""";
+}

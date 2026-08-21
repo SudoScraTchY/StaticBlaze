@@ -1,0 +1,14 @@
+<SitePage Site=@Site Title="Not found" Description="Page not found" Canonical="/404.html">
+        <div class="py-24 text-center">
+            <p class="font-mono text-gold tracking-widest text-sm">ERROR 404</p>
+            <h1 class="mt-3 text-4xl font-bold tracking-tight">This page does not exist.</h1>
+            <p class="mt-4 text-muted">The path you followed leads nowhere on this site.</p>
+            <a href="@(B)/" class="inline-block mt-8 font-mono text-sm text-accent hover:underline underline-offset-4">← back to posts</a>
+        </div>
+    </SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+
+    private string B => Site.BasePath;
+}

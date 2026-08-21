@@ -263,3 +263,15 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+
+# StaticBlaze v2
+/dist/
+/dist-assets/
+/admin-published/
+/tools/*
+!/tools/node-tools/
+/tools/node-tools/node_modules/
+!/tools/serve.mjs
+!/tools/get-fonts.ps1
+.zcode/
+*.exe

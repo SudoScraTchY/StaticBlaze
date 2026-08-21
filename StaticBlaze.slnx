@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StaticBlaze.Admin/StaticBlaze.Admin.csproj" />
+    <Project Path="src/StaticBlaze.Core/StaticBlaze.Core.csproj" />
+    <Project Path="src/StaticBlaze.Generator/StaticBlaze.Generator.csproj" />
+    <Project Path="src/StaticBlaze.Site/StaticBlaze.Site.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/StaticBlaze.Core.Tests/StaticBlaze.Core.Tests.csproj" />
+  </Folder>
+</Solution>

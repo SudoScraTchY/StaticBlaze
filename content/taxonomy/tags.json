@@ -1,0 +1,8 @@
+[
+  { "slug": "blazor", "title": "Blazor", "description": "C# in the browser and elsewhere." },
+  { "slug": "dotnet", "title": ".NET", "description": "The platform this blog is built on." },
+  { "slug": "static-sites", "title": "Static Sites", "description": "Sites that are just files, the way the web intended." },
+  { "slug": "design", "title": "Design", "description": "Type, color, structure." },
+  { "slug": "github", "title": "GitHub", "description": "Using the repository as a database." },
+  { "slug": "markdown", "title": "Markdown", "description": "Plain text that grows up into pages." }
+]

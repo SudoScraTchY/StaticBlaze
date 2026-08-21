@@ -1,0 +1,55 @@
+@page "/settings"
+@inject PatVaultService Vault
+@inject AdminConfig Config
+
+<h1 class="section-label mb-8" data-n="05">settings</h1>
+
+<div class="grid lg:grid-cols-2 gap-6">
+    <section class="card p-6">
+        <h2 class="title-block mb-4">repository</h2>
+        <dl class="text-sm flex flex-col gap-3">
+            <div class="flex justify-between gap-4">
+                <dt class="text-muted">owner / repo</dt>
+                <dd class="font-mono">@Config.Owner / @Config.Repo</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-muted">branch</dt>
+                <dd class="font-mono">@Config.Branch</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-muted">content path</dt>
+                <dd class="font-mono">/@Config.ContentPath</dd>
+            </div>
+        </dl>
+        <p class="text-xs text-muted mt-5 leading-relaxed">
+            Configured in <code class="font-mono">appsettings.json</code> inside the admin app. Changing it requires a rebuild.
+        </p>
+    </section>
+
+    <section class="card p-6">
+        <h2 class="title-block mb-4">vault</h2>
+        <p class="text-sm text-muted leading-relaxed mb-5">
+            The token is encrypted at rest (AES-GCM-256, PBKDF2 310k iterations). The passphrase and key exist
+            only in memory for this session and auto-lock after @AuthService.IdleLockMinutes idle minutes.
+            Destroying the vault removes the ciphertext from this browser; you will need the PAT again next time.
+        </p>
+        <div class="flex flex-wrap gap-3">
+            <button type="button" class="btn" @onclick="LockNowAsync">lock now</button>
+            <button type="button" class="btn text-pomegranate" @onclick="DestroyAsync">destroy vault</button>
+        </div>
+    </section>
+</div>
+
+@code {
+    private async Task LockNowAsync()
+    {
+        await Auth.LockAsync();
+        Nav.NavigateTo("unlock");
+    }
+
+    private async Task DestroyAsync()
+    {
+        await Auth.DestroyVaultAsync();
+        Nav.NavigateTo("unlock");
+    }
+}

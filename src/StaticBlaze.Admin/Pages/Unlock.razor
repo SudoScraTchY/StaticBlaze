@@ -1,0 +1,105 @@
+@page "/unlock"
+@page "/"
+
+@inject PatVaultService Vault
+
+<div class="max-w-md mx-auto mt-16">
+    <h1 class="section-label mb-8" data-n="00">@(HasVault ? "unlock" : "first run")</h1>
+
+    <div class="card p-6 sm:p-8">
+        @if (Error is not null)
+        {
+            <p class="text-sm text-pomegranate mb-4 font-mono">@Error</p>
+        }
+
+        @if (!HasVault)
+        {
+            <p class="text-sm text-muted leading-relaxed mb-6">
+                Paste a <strong>fine-grained GitHub PAT</strong> (Contents: Read and write on this repository,
+                short expiry). It will be encrypted with a passphrase using AES-GCM before it touches localStorage.
+            </p>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label for="pat" class="block mb-1.5">github token</label>
+                    <input id="pat" type="password" class="w-full" @bind="_token" placeholder="github_pat_…" autocomplete="off" />
+                </div>
+                <div>
+                    <label for="pp" class="block mb-1.5">passphrase</label>
+                    <input id="pp" type="password" class="w-full" @bind="_passphrase" autocomplete="new-password" />
+                </div>
+                <div>
+                    <label for="pp2" class="block mb-1.5">passphrase (again)</label>
+                    <input id="pp2" type="password" class="w-full" @bind="_confirm" autocomplete="new-password" />
+                </div>
+                <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="SetupAsync">
+                    @(Busy ? "verifying…" : "create vault + sign in")
+                </button>
+            </div>
+        }
+        else
+        {
+            <p class="text-sm text-muted leading-relaxed mb-6">
+                The token is stored encrypted. Enter your passphrase to unlock it for this session
+                (auto-locks after @AuthService.IdleLockMinutes idle minutes).
+            </p>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label for="pp" class="block mb-1.5">passphrase</label>
+                    <input id="pp" type="password" class="w-full" @bind="_passphrase" autocomplete="current-password" />
+                </div>
+                <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="UnlockAsync">
+                    @(Busy ? "unlocking…" : "unlock")
+                </button>
+            </div>
+        }
+    </div>
+
+    <p class="title-block mt-6 text-xs leading-relaxed">
+        Encryption protects the token at rest; it cannot protect a live compromised page.
+        Use a fine-grained, short-lived token.
+    </p>
+</div>
+
+@code {
+    private bool HasVault;
+    private bool Busy;
+    private string? Error;
+    private string _token = "";
+    private string _passphrase = "";
+    private string _confirm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Auth.Authed) { Nav.NavigateTo("dashboard"); return; }
+        HasVault = await Vault.HasVaultAsync();
+    }
+
+    private async Task SetupAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_token) || _passphrase.Length < 8) { Error = "Token required; passphrase min 8 characters."; return; }
+        if (_passphrase != _confirm) { Error = "Passphrases do not match."; return; }
+        await RunAsync(() => Auth.SetupAsync(_passphrase, _token));
+    }
+
+    private async Task UnlockAsync() =>
+        await RunAsync(() => Auth.UnlockAsync(_passphrase));
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        Busy = true;
+        Error = null;
+        try
+        {
+            await action();
+            Nav.NavigateTo("dashboard");
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+}

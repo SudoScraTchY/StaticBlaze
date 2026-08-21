@@ -1,0 +1,75 @@
+@page "/dashboard"
+@inject GitHubApiClient Github
+@inject PostService Posts
+@inject MediaService Media
+
+<h1 class="section-label mb-8" data-n="01">dashboard</h1>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    @foreach (var stat in _stats)
+    {
+        <div class="card p-5">
+            <p class="font-mono text-3xl font-semibold">@stat.Value</p>
+            <p class="title-block mt-2">@stat.Label</p>
+        </div>
+    }
+</div>
+
+<div class="grid lg:grid-cols-2 gap-4">
+    <section class="card p-6">
+        <h2 class="title-block mb-4">recent commits</h2>
+        @if (_commits.Count == 0 && !Loading)
+        {
+            <p class="text-sm text-muted">No commits found.</p>
+        }
+        <ul class="divide-y divide-line-soft">
+            @foreach (var commit in _commits)
+            {
+                <li class="py-2.5">
+                    <p class="text-sm truncate">@commit.Commit.Message.Split('\n')[0]</p>
+                    <p class="title-block text-xs mt-0.5">@commit.Commit.Author.Name · @commit.Commit.Author.Date.ToString("yyyy-MM-dd HH:mm")</p>
+                </li>
+            }
+        </ul>
+    </section>
+    <section class="card p-6">
+        <h2 class="title-block mb-4">how publishing works</h2>
+        <ol class="text-sm text-muted leading-relaxed list-decimal pl-4 flex flex-col gap-2">
+            <li>Edit a post here; saving commits markdown to the repository.</li>
+            <li>The push triggers GitHub Actions.</li>
+            <li>The generator rebuilds the site and Pages deploys it.</li>
+            <li>Visitors get plain HTML. This admin is the only .NET that runs client-side.</li>
+        </ol>
+    </section>
+</div>
+
+@code {
+    private bool Loading = true;
+    private List<(string Label, string Value)> _stats = [];
+    private List<GitHubCommit> _commits = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.Authed) { Nav.NavigateTo("unlock"); return; }
+        try
+        {
+            var posts = Task.Run(async () => await Posts.ListPostsAsync());
+            var tags = Task.Run(async () => await Posts.GetTermsAsync("tags"));
+            var assets = Task.Run(async () => await Media.ListAssetsAsync());
+            var commits = Task.Run(async () => await Github.GetRecentCommitsAsync(6));
+            await Task.WhenAll(posts, tags, assets, commits);
+            _stats =
+            [
+                ("posts", posts.Result.Count.ToString()),
+                ("published", posts.Result.Count(p => !p.Frontmatter.Draft).ToString()),
+                ("tags", tags.Result.Count.ToString()),
+                ("assets", assets.Result.Count.ToString()),
+            ];
+            _commits = commits.Result;
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+}

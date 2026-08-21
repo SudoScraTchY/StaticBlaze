@@ -1,0 +1,61 @@
+@page "/posts"
+@inject PostService PostSvc
+
+<div class="flex items-center justify-between mb-8">
+    <h1 class="section-label flex-1" data-n="02">posts</h1>
+    <a href="posts/edit" class="btn btn-primary">new post</a>
+</div>
+
+<input type="search" class="w-full mb-6" placeholder="filter…" @bind="_filter" />
+
+@if (Loading)
+{
+    <p class="text-muted text-sm font-mono">loading…</p>
+}
+else
+{
+    <ul class="border-t border-line">
+        @foreach (var post in Filtered)
+        {
+            <li class="border-b border-line">
+                <a href="@($"posts/edit?file={Uri.EscapeDataString(post.FileName)}")"
+                   class="group flex items-baseline gap-4 py-3 px-1 hover:bg-accent-soft transition-colors duration-150">
+                    <span class="title-block shrink-0 w-24">@post.Frontmatter.Published.ToString("yyyy-MM-dd")</span>
+                    <span class="group-hover:text-accent transition-colors duration-150 font-medium truncate">@post.Frontmatter.Title</span>
+                    @if (post.Frontmatter.Draft)
+                    {
+                        <span class="font-mono text-[0.6875rem] text-gold border border-gold/40 rounded-sm px-1.5 py-0.5 shrink-0">draft</span>
+                    }
+                    @if (post.Frontmatter.Featured)
+                    {
+                        <span class="text-gold shrink-0">◆</span>
+                    }
+                    <span class="title-block ml-auto shrink-0 hidden sm:inline truncate">@string.Join(" ", post.Frontmatter.Tags.Select(t => "#" + t))</span>
+                </a>
+            </li>
+        }
+    </ul>
+    @if (!Filtered.Any())
+    {
+        <p class="text-muted text-sm mt-4">No posts match.</p>
+    }
+}
+
+@code {
+    private bool Loading = true;
+    private string _filter = "";
+    private List<AdminPost> _posts = [];
+
+    private IEnumerable<AdminPost> Filtered => string.IsNullOrWhiteSpace(_filter)
+        ? _posts
+        : _posts.Where(p => p.Frontmatter.Title.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+            || p.Frontmatter.Slug.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+            || string.Join(' ', p.Frontmatter.Tags).Contains(_filter, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.Authed) { Nav.NavigateTo("unlock"); return; }
+        try { _posts = await PostSvc.ListPostsAsync(); }
+        finally { Loading = false; }
+    }
+}

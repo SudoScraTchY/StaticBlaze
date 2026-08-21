@@ -1,0 +1,72 @@
+@page "/media"
+@inject IJSRuntime JS
+@inject MediaService MediaSvc
+
+<h1 class="section-label mb-8" data-n="04">media</h1>
+
+<div class="card p-6 mb-6">
+    <p class="title-block mb-3">uploads are content-addressed: same bytes, same filename, zero duplicates</p>
+    <InputFile OnChange="UploadAsync" multiple accept="image/*" class="text-sm text-muted" />
+    @if (_uploadStatus is not null)
+    {
+        <p class="font-mono text-xs text-accent mt-3">@_uploadStatus</p>
+    }
+</div>
+
+@if (Loading)
+{
+    <p class="text-muted text-sm font-mono">loading…</p>
+}
+else
+{
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        @foreach (var asset in _assets)
+        {
+            <div class="card overflow-hidden group">
+                <img src="@asset.DownloadUrl" alt="@asset.Name" class="w-full aspect-video object-cover bg-surface border-b border-line" loading="lazy" />
+                <div class="p-3">
+                    <p class="font-mono text-xs truncate text-muted" title="@asset.Name">@asset.Name</p>
+                    <div class="flex gap-2 mt-2">
+                        <button type="button" class="btn text-xs py-1 px-2" @onclick="() => CopyMarkdown(asset.Name)">copy md</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    @if (_assets.Count == 0)
+    {
+        <p class="text-muted text-sm">No assets yet. Upload the first image above.</p>
+    }
+}
+
+@code {
+    private bool Loading = true;
+    private string? _uploadStatus;
+    private List<GitHubListItem> _assets = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.Authed) { Nav.NavigateTo("unlock"); return; }
+        try { _assets = await MediaSvc.ListAssetsAsync(); }
+        finally { Loading = false; }
+    }
+
+    private async Task UploadAsync(InputFileChangeEventArgs e)
+    {
+        _uploadStatus = $"uploading {e.FileCount} file(s)…";
+        var uploaded = 0;
+        foreach (var file in e.GetMultipleFiles(10))
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            await MediaSvc.UploadAsync(ms.ToArray(), file.ContentType);
+            uploaded++;
+        }
+        _uploadStatus = $"uploaded {uploaded} file(s)";
+        _assets = await MediaSvc.ListAssetsAsync();
+    }
+
+    private Task CopyMarkdown(string fileName) =>
+        JS.InvokeVoidAsync("navigator.clipboard.writeText", MediaService.MarkdownFor(fileName)).AsTask();
+}

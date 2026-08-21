@@ -1,0 +1,218 @@
+@page "/posts/edit"
+@inject IJSRuntime JS
+@inject PostService Posts
+@inject MediaService Media
+@inject PreviewRenderer Preview
+@implements IAsyncDisposable
+
+<h1 class="section-label mb-8" data-n="03">@(IsNew ? "new post" : "edit post")</h1>
+
+@if (_loadError is not null)
+{
+    <p class="text-sm text-pomegranate font-mono mb-4">@_loadError</p>
+}
+
+<div class="grid lg:grid-cols-[1fr_20rem] gap-6 items-start">
+    <div class="flex flex-col gap-5 min-w-0">
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+                <label for="title" class="block mb-1.5">title</label>
+                <input id="title" class="w-full" @bind="_fm.Title" @bind:after="SyncSlug" />
+            </div>
+            <div>
+                <label for="slug" class="block mb-1.5">slug</label>
+                <input id="slug" class="w-full font-mono text-sm" @bind="_fm.Slug" @bind:after="SlugTouched" />
+            </div>
+            <div>
+                <label for="category" class="block mb-1.5">category</label>
+                <select id="category" class="w-full" @bind="_fm.Category">
+                    @foreach (var term in _categories)
+                    {
+                        <option value="@term.Slug">@term.Title</option>
+                    }
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label for="desc" class="block mb-1.5">description</label>
+                <input id="desc" class="w-full" @bind="_fm.Description" />
+            </div>
+            <div class="sm:col-span-2">
+                <label for="tags" class="block mb-1.5">tags (comma separated, must exist in taxonomy)</label>
+                <input id="tags" class="w-full font-mono text-sm" value="@string.Join(", ", _fm.Tags)"
+                       @oninput="OnTagsChanged" />
+            </div>
+            <div>
+                <label for="published" class="block mb-1.5">published (utc)</label>
+                <input id="published" type="date" class="w-full" value="@_fm.Published.ToString("yyyy-MM-dd")" @oninput="OnPublishedChanged" />
+            </div>
+            <div class="flex items-end gap-6 pb-1">
+                <label class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg">
+                    <input type="checkbox" class="size-4" @bind="_fm.Draft" /> draft
+                </label>
+                <label class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg">
+                    <input type="checkbox" class="size-4" @bind="_fm.Featured" /> featured
+                </label>
+            </div>
+        </div>
+
+        @if (_fm.Slug is { Length: > 0 })
+        {
+            <p class="title-block text-xs">preview parity: the markdown below renders through the same pipeline the generator uses.</p>
+        }
+        <div @ref="_editorHost" id="editor-host" class="border border-line rounded min-h-[28rem]"></div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="SaveAsync">@(Busy ? "committing…" : IsNew ? "create post" : "save")</button>
+            @if (!IsNew)
+            {
+                <button type="button" class="btn text-pomegranate" disabled="@Busy" @onclick="DeleteAsync">delete</button>
+            }
+            <a href="posts" class="btn">back</a>
+            @if (_saved is not null)
+            {
+                <span class="font-mono text-xs text-accent">@_saved</span>
+            }
+        </div>
+    </div>
+
+    <aside class="card p-5 lg:sticky lg:top-20">
+        <h2 class="title-block mb-3">live preview</h2>
+        <div class="post-body text-sm max-h-[36rem] overflow-y-auto pr-2">@((MarkupString)_previewHtml)</div>
+    </aside>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "file")] private string? FileName { get; set; }
+
+    private ElementReference _editorHost;
+    private IJSObjectReference? _editor;
+    private PostFrontmatter _fm = new() { Published = DateTimeOffset.UtcNow, Author = "mehrshad" };
+    private string _body = "";
+    private string _previewHtml = "";
+    private string? _saved;
+    private string? _loadError;
+    private bool Busy;
+    private bool IsNew = true;
+    private string _existingFile = "";
+    private List<TaxonomyTerm> _categories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.Authed) { Nav.NavigateTo("unlock"); return; }
+        _categories = await Posts.GetTermsAsync("categories");
+        if (FileName is { } file)
+        {
+            var post = await Posts.GetPostAsync(file);
+            if (post is null) { _loadError = $"{file} not found in the repository."; return; }
+            _fm = post.Frontmatter;
+            _body = post.Body;
+            _existingFile = file;
+            IsNew = false;
+        }
+        _previewHtml = Preview.Render(_body);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _loadError is null)
+        {
+            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/adminEditor.js");
+            _editor = await module.InvokeAsync<IJSObjectReference>("initEditor", _editorHost, DotNetObjectReference.Create(this), _body);
+        }
+    }
+
+    private bool _slugTouched;
+
+    // auto-slug from the title while creating, until the slug is hand-edited
+    private void SyncSlug()
+    {
+        if (IsNew && !_slugTouched)
+            _fm.Slug = Slugify(_fm.Title);
+    }
+
+    private void SlugTouched() => _slugTouched = true;
+
+    private static string Slugify(string title)
+    {
+        var slug = title.ToLowerInvariant().Replace(' ', '-');
+        slug = string.Concat(slug.Select(c => char.IsAsciiLetterOrDigit(c) || c == '-' ? c : '-'));
+        while (slug.Contains("--")) slug = slug.Replace("--", "-");
+        return slug.Trim('-');
+    }
+
+    private void OnTagsChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        _fm.Tags = [.. raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
+    }
+
+    private void OnPublishedChanged(ChangeEventArgs e)
+    {
+        if (DateTimeOffset.TryParse(e.Value?.ToString(), out var date))
+            _fm.Published = date;
+    }
+
+    [JSInvokable]
+    public async Task<string> UploadImageAsync(byte[] bytes, string contentType)
+    {
+        var url = await Media.UploadAsync(bytes, contentType);
+        return url;
+    }
+
+    [JSInvokable]
+    public async Task OnMarkdownChangedAsync(string markdown)
+    {
+        _body = markdown;
+        _previewHtml = Preview.Render(markdown);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SaveAsync()
+    {
+        Busy = true;
+        _saved = null;
+        try
+        {
+            _fm.Modified = DateTimeOffset.UtcNow;
+            if (IsNew)
+            {
+                _existingFile = await Posts.CreatePostAsync(_fm, _body);
+                IsNew = false;
+                _saved = $"created {_existingFile}";
+            }
+            else
+            {
+                await Posts.SavePostAsync(new AdminPost(_existingFile, "", _fm, _body), $"update: {_fm.Slug}");
+                _saved = $"saved · {DateTimeOffset.Now:HH:mm:ss}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _saved = $"error: {ex.Message}";
+        }
+        finally { Busy = false; }
+    }
+
+    private async Task DeleteAsync()
+    {
+        Busy = true;
+        try
+        {
+            await Posts.DeletePostAsync(new AdminPost(_existingFile, "", _fm, _body));
+            Nav.NavigateTo("posts");
+        }
+        catch (Exception ex)
+        {
+            _saved = $"error: {ex.Message}";
+            Busy = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_editor is not null)
+        {
+            try { await _editor.InvokeVoidAsync("destroy"); await _editor.DisposeAsync(); } catch { }
+        }
+    }
+}

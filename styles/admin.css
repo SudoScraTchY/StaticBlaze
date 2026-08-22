@@ -1,5 +1,7 @@
+/* Import tailwind directly from the pinned toolchain (tools/node-tools) so
+   local builds and CI resolve identically, with no root node_modules. */
+@import "../tools/node-tools/node_modules/tailwindcss/index.css";
 @import "./_tokens.css";
-@import "tailwindcss";
 
 @source "../src/StaticBlaze.Admin";
 

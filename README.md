@@ -52,8 +52,8 @@ progressive enhancements.
 ## Getting started
 
 Requirements: .NET 10 SDK. Tailwind runs through the pinned CLI in `tools/node-tools`;
-the repo-root `node_modules` junction makes it resolve without a global Node install
-(CI uses `npm ci --prefix tools/node-tools`).
+the CSS entrypoints import Tailwind directly from that folder, so local builds and CI
+resolve identically without a global Node install (CI runs `npm ci --prefix tools/node-tools`).
 
 ```bash
 dotnet test

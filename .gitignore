@@ -275,3 +275,11 @@ __pycache__/
 !/tools/get-fonts.ps1
 .zcode/
 *.exe
+
+# golden-file test artefacts: written when a snapshot mismatches, never committed
+*.actual
+
+# site operational data: visitor submissions and exported review files.
+# The repository is public, so this must never be committed.
+var/
+artifacts/

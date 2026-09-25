@@ -7,5 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/StaticBlaze.Core.Tests/StaticBlaze.Core.Tests.csproj" />
+    <Project Path="tests/StaticBlaze.Site.Tests/StaticBlaze.Site.Tests.csproj" />
   </Folder>
 </Solution>

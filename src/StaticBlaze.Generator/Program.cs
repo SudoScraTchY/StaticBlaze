@@ -16,6 +16,8 @@ var contentDir = GetArg(args, "--content") ?? "content";
 var outDir = GetArg(args, "--out") ?? "dist";
 var fontsDir = GetArg(args, "--fonts") ?? "styles/fonts";
 var staticDir = GetArg(args, "--static") ?? "styles/static";
+var vendorDir = GetArg(args, "--vendor") ?? "styles/vendor";
+var cssPath = GetArg(args, "--css");
 
 // ----- load + validate (bad content fails the build, never the site) -----
 var content = await ContentStore.LoadAsync(contentDir);
@@ -54,6 +56,42 @@ Task<string> Render<TComponent>(IDictionary<string, object?> parameters) where T
     });
 
 var summaryBySlug = manifest.Posts.ToDictionary(p => p.Slug, StringComparer.OrdinalIgnoreCase);
+var topTags = manifest.Tags.Where(t => t.Count > 0).OrderByDescending(t => t.Count).ThenBy(t => t.Slug).ToList();
+
+// ----- payloads the 3D layer and the palaces read -----
+// The field is the archive, so the scene gets the real posts, not decoration.
+static string Encode(object payload) =>
+    JsonSerializer.Serialize(payload).Replace("<", "\\u003c");
+
+object ScenePayload(PostSummary? current = null)
+{
+    var list = manifest.Posts.Select(p => new
+    {
+        slug = p.Slug,
+        title = p.Title,
+        tags = p.Tags,
+        category = p.Category,
+        published = p.Published.ToString("yyyy-MM-dd"),
+        featured = p.Featured,
+    }).ToArray();
+
+    if (current is null) return new { posts = list };
+    return new
+    {
+        posts = list,
+        post = new { slug = current.Slug, tags = current.Tags, wordCount = current.ReadTimeMinutes * 200 },
+    };
+}
+
+string SceneJson(PostSummary? current = null) => Encode(ScenePayload(current));
+
+string PostsJson() => Encode(new
+{
+    posts = manifest.Posts.Select(p => new { slug = p.Slug, title = p.Title, tags = p.Tags, category = p.Category, published = p.Published.ToString("yyyy-MM-dd") }).ToArray(),
+});
+
+var sharedPosts = PostsJson();
+var sharedScene = SceneJson();
 
 // ----- landing pages -----
 var pages = ManifestBuilder.Paginate(manifest.Posts, site.PostsPerPage);
@@ -71,8 +109,22 @@ for (var i = 0; i < pages.Count; i++)
         ["Featured"] = featured,
         ["AllPosts"] = manifest.Posts,
         ["TagCount"] = manifest.Tags.Count,
+        ["TopTags"] = topTags,
+        ["SceneData"] = sharedScene,
+        ["PostsJson"] = sharedPosts,
     }));
 }
+
+// ----- the full filterable index (new surface) -----
+await WritePageAsync("posts/index.html", Render<PostsIndexPage>(new Dictionary<string, object?>
+{
+    ["Site"] = site,
+    ["Posts"] = manifest.Posts,
+    ["Tags"] = topTags,
+    ["Categories"] = manifest.Categories.Where(c => c.Count > 0).ToList(),
+    ["SceneData"] = sharedScene,
+    ["PostsJson"] = sharedPosts,
+}));
 
 // ----- post pages -----
 foreach (var post in posts)
@@ -85,7 +137,6 @@ foreach (var post in posts)
             .DistinctBy(p => p.Slug)
             .OrderByDescending(p => p.Published)
             .Take(ManifestBuilder.RelatedCount)];
-    // prefer manifest's scored related when available
     if (summaryBySlug.TryGetValue(post.Slug, out var self) && self.Related.Count > 0)
         related = [.. self.Related.Where(r => summaryBySlug.ContainsKey(r)).Select(r => summaryBySlug[r])];
 
@@ -97,12 +148,18 @@ foreach (var post in posts)
         ["Author"] = content.FindAuthor(post.Frontmatter.Author),
         ["CategoryTitle"] = categoryTitle,
         ["Related"] = related,
+        ["SceneData"] = SceneJson(summaryBySlug.TryGetValue(post.Slug, out var s) ? s : null),
+        ["PostsJson"] = sharedPosts,
     }));
 }
 
 // ----- taxonomy index + term pages -----
-await WritePageAsync("tags/index.html", Render<TermsIndexPage>(Params(site, "tags", "Tags", manifest.Tags)));
-await WritePageAsync("categories/index.html", Render<TermsIndexPage>(Params(site, "categories", "Categories", manifest.Categories)));
+// Only terms that actually have posts get a page (see the term loop below). Listing a term that was
+// never emitted produced a link to a 404 and a sitemap entry for a page that does not exist.
+var usedTags = manifest.Tags.Where(t => t.Count > 0).ToList();
+var usedCategories = manifest.Categories.Where(c => c.Count > 0).ToList();
+await WritePageAsync("tags/index.html", Render<TermsIndexPage>(Params(site, "tags", "Tags", usedTags, sharedScene, sharedPosts)));
+await WritePageAsync("categories/index.html", Render<TermsIndexPage>(Params(site, "categories", "Categories", usedCategories, sharedScene, sharedPosts)));
 
 foreach (var (kind, label, terms) in new[] { ("tags", "Tag", manifest.Tags), ("categories", "Category", manifest.Categories) })
 {
@@ -127,18 +184,21 @@ foreach (var (kind, label, terms) in new[] { ("tags", "Tag", manifest.Tags), ("c
                 ["Posts"] = termPages[i],
                 ["Page"] = page,
                 ["TotalPages"] = termPages.Count,
+                ["SceneData"] = sharedScene,
+                ["PostsJson"] = sharedPosts,
             }));
         }
     }
 }
 
-// ----- author + about + archive + 404 -----
+// ----- author + about + archive + contact + 404 -----
 foreach (var author in content.Authors)
 {
     var authorPosts = manifest.Posts.Where(p => string.Equals(p.AuthorHandle, author.Handle, StringComparison.OrdinalIgnoreCase)).ToList();
     await WritePageAsync($"authors/{author.Handle}/index.html", Render<AuthorPage>(new Dictionary<string, object?>
     {
         ["Site"] = site, ["Author"] = author, ["Posts"] = authorPosts,
+        ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
     }));
 }
 
@@ -148,14 +208,27 @@ if (content.FindAuthor(site.DefaultAuthor) is { } about)
     await WritePageAsync("about/index.html", Render<AuthorPage>(new Dictionary<string, object?>
     {
         ["Site"] = site, ["Author"] = about, ["Posts"] = aboutPosts,
+        ["CanonicalOverride"] = "/about/",
+        ["TitleOverride"] = "About",
+        ["DescriptionOverride"] = $"How {about.Name} works and what this blog is for. Notes on .NET, Blazor and static sites, built with a generator that lives in the repository.",
+        ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
     }));
 }
 
 await WritePageAsync("archive/index.html", Render<ArchivePage>(new Dictionary<string, object?>
 {
-    ["Site"] = site, ["Posts"] = manifest.Posts,
+    ["Site"] = site, ["Posts"] = manifest.Posts, ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
 }));
-await WritePageAsync("404.html", Render<NotFoundPage>(new Dictionary<string, object?> { ["Site"] = site }));
+
+await WritePageAsync("contact/index.html", Render<ContactPage>(new Dictionary<string, object?>
+{
+    ["Site"] = site, ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
+}));
+
+await WritePageAsync("404.html", Render<NotFoundPage>(new Dictionary<string, object?>
+{
+    ["Site"] = site, ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
+}));
 
 // ----- machine artifacts -----
 await File.WriteAllTextAsync(Path.Combine(outDir, "manifest.json"), JsonSerializer.Serialize(manifest, StaticBlazeJson.Options));
@@ -165,10 +238,31 @@ await File.WriteAllTextAsync(Path.Combine(outDir, "atom.xml"), Feeds.Atom(site, 
 await File.WriteAllTextAsync(Path.Combine(outDir, "sitemap.xml"), Feeds.Sitemap(site, manifest));
 await File.WriteAllTextAsync(Path.Combine(outDir, "robots.txt"), $"User-agent: *\nAllow: /\n\nSitemap: {site.Url.TrimEnd('/')}/sitemap.xml\n");
 
-// ----- static assets: content assets, fonts, visitor js -----
+// ----- static assets: content assets, fonts, visitor js, vendored libraries -----
 CopyDirectory(Path.Combine(contentDir, "assets"), Path.Combine(outDir, "assets"));
 CopyDirectory(fontsDir, Path.Combine(outDir, "assets", "fonts"));
 CopyDirectory(staticDir, Path.Combine(outDir, "assets"));
+CopyDirectory(vendorDir, Path.Combine(outDir, "assets", "vendor"));
+
+// ----- optional: the built stylesheet (the CI workflow does this itself) -----
+if (!string.IsNullOrWhiteSpace(cssPath))
+{
+    if (File.Exists(cssPath))
+    {
+        var target = Path.Combine(outDir, "assets", "site.css");
+        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        File.Copy(cssPath, target, overwrite: true);
+        Console.WriteLine($"Stylesheet copied: {cssPath} -> {target}");
+    }
+    else
+    {
+        Console.Error.WriteLine($"warning: --css was given but '{cssPath}' does not exist; dist/assets/site.css was not written.");
+    }
+}
+else
+{
+    Console.WriteLine("note: no --css given, so dist/assets/site.css was not written (the site will render unstyled).");
+}
 
 Console.WriteLine($"Site generated: {written} pages + feeds into {Path.GetFullPath(outDir)}");
 return 0;
@@ -180,9 +274,10 @@ static string? GetArg(string[] args, string name)
     return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
 }
 
-static Dictionary<string, object?> Params(SiteConfig site, string kind, string label, List<TermCount> terms) => new()
+static Dictionary<string, object?> Params(SiteConfig site, string kind, string label, List<TermCount> terms, string scene, string postsJson) => new()
 {
     ["Site"] = site, ["Kind"] = kind, ["Label"] = label, ["Terms"] = terms,
+    ["SceneData"] = scene, ["PostsJson"] = postsJson,
 };
 
 static void CopyDirectory(string source, string destination)
@@ -199,7 +294,6 @@ static void CopyDirectory(string source, string destination)
 internal static class Feeds
 {
     private static XNamespace AtomNs => "http://www.w3.org/2005/Atom";
-    private static XNamespace ContentNs => "http://purl.org/rss/1.0/modules/content/";
 
     public static string Rss(SiteConfig site, Manifest manifest)
     {
@@ -252,10 +346,14 @@ internal static class Feeds
 
         var urls = manifest.Posts.Select(p => Entry(p.Url, p.Modified ?? p.Published))
             .Append(Entry("/"))
+            .Append(Entry("/posts/"))
             .Append(Entry("/archive/"))
+            .Append(Entry("/tags/"))
+            .Append(Entry("/categories/"))
             .Append(Entry("/about/"))
-            .Concat(manifest.Tags.Select(t => Entry($"/tags/{t.Slug}/")))
-            .Concat(manifest.Categories.Select(c => Entry($"/categories/{c.Slug}/")))
+            .Append(Entry("/contact/"))
+            .Concat(manifest.Tags.Where(t => t.Count > 0).Select(t => Entry($"/tags/{t.Slug}/")))
+            .Concat(manifest.Categories.Where(c => c.Count > 0).Select(c => Entry($"/categories/{c.Slug}/")))
             .Concat(manifest.Authors.Select(a => Entry($"/authors/{a.Handle}/")))
             .SelectMany(x => x);
 

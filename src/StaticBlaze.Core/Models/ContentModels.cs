@@ -15,6 +15,9 @@ public sealed class SiteConfig
     public string DefaultAuthor { get; set; } = "";
     public List<NavLink> Nav { get; set; } = [];
 
+    /// <summary>Hero copy for the home page. Optional; the shell falls back to the site title and description.</summary>
+    public HeroConfig Hero { get; set; } = new();
+
     /// <summary>Path prefix when hosted under a subpath (e.g. "/StaticBlaze" for
     /// user.github.io/repo). Derived from <see cref="Url"/> at load time; empty for root hosting.</summary>
     public string BasePath { get; set; } = "";
@@ -26,6 +29,18 @@ public sealed class NavLink
     public string Href { get; set; } = "";
 }
 
+/// <summary>Editorial copy for the home hero, so the headline is authored rather than derived.</summary>
+public sealed class HeroConfig
+{
+    /// <summary>Small uppercase line above the headline.</summary>
+    public string Kicker { get; set; } = "";
+
+    /// <summary>One entry per rendered headline line. The motion layer animates these individually.</summary>
+    public List<string> Lines { get; set; } = [];
+
+    /// <summary>Standfirst under the headline.</summary>
+    public string Sub { get; set; } = "";
+}
 public sealed class AuthorRecord
 {
     public string Handle { get; set; } = "";

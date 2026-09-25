@@ -7,9 +7,20 @@
   "feedPostCount": 20,
   "wordmark": "mehrshad",
   "defaultAuthor": "mehrshad",
+  "hero": {
+    "kicker": "engineer · tools · notes",
+    "lines": [
+      "Build the thing.",
+      "Write down what broke."
+    ],
+    "sub": "Notes on .NET, Blazor, static sites, and the tools I keep rebuilding. Every post here is a folder of markdown that a console app turns into the page you are reading."
+  },
   "nav": [
-    { "label": "posts", "href": "/" },
+    { "label": "home", "href": "/" },
+    { "label": "index", "href": "/posts/" },
+    { "label": "tags", "href": "/tags/" },
     { "label": "archive", "href": "/archive/" },
-    { "label": "about", "href": "/about/" }
+    { "label": "about", "href": "/about/" },
+    { "label": "contact", "href": "/contact/" }
   ]
 }

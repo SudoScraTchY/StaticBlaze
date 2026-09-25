@@ -1,3 +1,22 @@
+> **STATUS: HISTORICAL - superseded by the implementation.**
+>
+> This document captured the v2 design intent before the code existed. The code is now the source of
+> truth, and four of its statements have drifted:
+>
+> | This document says | The code does |
+> |---|---|
+> | `net11.0` everywhere; CI pins a preview SDK | every `csproj` targets `net10.0`; `deploy.yml` pins `dotnet-version: 10.x` |
+> | Tailwind via the standalone CLI executable, "no Node.js required" | `npm ci --prefix tools/node-tools` + `@tailwindcss/cli` in both CI and local development |
+> | the generator has a `--migrate` command | no `--migrate` argument exists; the legacy import was never implemented |
+> | `StaticBlaze.Site` exposes `MainLayout` / `Head` | the shell is `SitePage.razor`; there is no `Head` component |
+>
+> Where this document and the code disagree, believe the code. The shipped visual system also replaces
+> the "drafting sheet" described below - see `docs/05-design-system.md`.
+>
+> Kept for history. Not maintained. Do not delete: the reasoning behind the v2 decisions is still worth
+> reading. Current state lives in `README.md` and `docs/`.
+
+---
 # StaticBlaze v2 — Complete Design & Implementation Plan
 
 > A from-scratch rebuild of StaticBlaze as a **Jekyll alternative in .NET**: GitHub as headless CMS,

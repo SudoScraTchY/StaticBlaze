@@ -1,0 +1,93 @@
+@* Contact and subscribe. Client-side validated with a real state machine.
+   HONEST STATUS: this build has no persistence endpoint wired, so the form reports that plainly
+   instead of pretending to succeed. The transport is a single documented attribute, so pointing it
+   at a real endpoint later is a one-line change. See docs/11-handoff.md. *@
+<SitePage Site=@Site Title="Contact" Description="Send a note, or subscribe to the feed. No newsletter, no tracking, no marketing list, nothing sold or shared."
+          Canonical="/contact/" SceneData=@SceneData PostsJson=@PostsJson>
+    <section class="sec wrap split split-7-5" style="align-items:start">
+        <div>
+            <p class="eyebrow"><b>01</b>contact</p>
+            <h1 class="mt-4" style="font-size:var(--fs-xl);max-width:20ch">Send a note.</h1>
+            <p class="mt-4" style="color:var(--ink-dim);max-width:54ch">
+                Replies go to the address you leave here. Nothing is sold, shared, or added to a list
+                you did not ask for.
+            </p>
+
+            <form class="mt-8" data-form novalidate data-endpoint="">
+                <div style="display:grid;gap:1.1rem;max-width:38rem">
+                    <div>
+                        <label class="field-label" for="c-name">name</label>
+                        <input id="c-name" name="name" class="input" required minlength="2"
+                               aria-describedby="c-name-err" />
+                        <p class="form-err" id="c-name-err" hidden></p>
+                    </div>
+                    <div>
+                        <label class="field-label" for="c-email">email</label>
+                        <input id="c-email" name="email" class="input" type="email" required
+                               aria-describedby="c-email-hint c-email-err" />
+                        <p class="form-note" id="c-email-hint" style="margin-block-start:.4rem">Used for the reply only.</p>
+                        <p class="form-err" id="c-email-err" hidden></p>
+                    </div>
+                    <div>
+                        <label class="field-label" for="c-subject">subject</label>
+                        <select id="c-subject" name="subject" class="input">
+                            <option>a question about a post</option>
+                            <option>a correction</option>
+                            <option>work</option>
+                            <option>something else</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label" for="c-body">message</label>
+                        <textarea id="c-body" name="body" class="textarea" rows="6" required minlength="10"
+                                  aria-describedby="c-body-err"></textarea>
+                        <p class="form-err" id="c-body-err" hidden></p>
+                    </div>
+                    @* honeypot: real people never fill this, bots do *@
+                    <div aria-hidden="true" style="position:absolute;left:-9999px">
+                        <label for="c-site">website</label>
+                        <input id="c-site" name="website" tabindex="-1" autocomplete="off" />
+                    </div>
+
+                    <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+                        <button type="submit" class="btn btn-solid" data-submit data-magnet="6">send</button>
+                        <span class="form-note" data-status aria-live="polite">not sent yet</span>
+                    </div>
+                    <p class="form-note" data-transport-note>
+                        Transport not configured in this build. The form validates, then tells you plainly
+                        that nothing was stored. See the handoff note for the one-line change.
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <div class="sticky-side">
+            <div class="panel">
+                <p class="panel-head"><span>elsewhere</span><span>01</span></p>
+                <div style="padding:1rem;display:grid;gap:.75rem">
+                    <a href="https://github.com/SudoScraTchY" rel="me" style="color:var(--accent);text-decoration:none;font-size:var(--fs-sm)">github</a>
+                    <a href="@(B)/rss.xml" style="color:var(--accent);text-decoration:none;font-size:var(--fs-sm)">rss feed</a>
+                    <a href="@(B)/atom.xml" style="color:var(--accent);text-decoration:none;font-size:var(--fs-sm)">atom feed</a>
+                </div>
+            </div>
+            <div class="panel" style="margin-block-start:1rem">
+                <p class="panel-head"><span>subscribe</span><span>02</span></p>
+                <div style="padding:1rem">
+                    <p style="font-size:var(--fs-sm);color:var(--ink-dim)">
+                        There is no newsletter. The feed is the subscription: paste it into any reader and
+                        you get every post without an inbox.
+                    </p>
+                    <p class="form-note" style="margin-block-start:.75rem">@(B)/rss.xml</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</SitePage>
+
+@code {
+    [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public string? SceneData { get; set; }
+    [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
+
+    private string B => Site.BasePath;
+}

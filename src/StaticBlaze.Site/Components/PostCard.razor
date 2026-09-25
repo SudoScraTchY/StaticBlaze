@@ -1,24 +1,34 @@
-@* Hairline post card: mono title-block line, title, clamped description, tag pills. *@
-<article class="group border border-line rounded bg-surface hover:border-accent transition-colors duration-150 flex flex-col">
-    <a href="@(Base + Post.Url)" class="flex flex-col gap-3 p-5 flex-1">
-        <p class="title-block flex items-center gap-2 flex-wrap">
+@* A post as an instrument node. Index number in zafaran, mono metadata, hairline edge, tilt on hover.
+   No emoji, no rounded-card-with-left-border, no drop shadow: depth is a lighter surface plus a glow. *@
+<article class="node" data-tilt data-reveal>
+    <span class="node-spine" aria-hidden="true"></span>
+    <a href="@(Base + Post.Url)" class="node-body" style="text-decoration:none;color:inherit">
+        <p class="node-meta">
+            <span class="node-idx">@Index.ToString("000")</span>
+            <i aria-hidden="true">/</i>
             <span>@Post.Published.ToString("yyyy-MM-dd")</span>
-            <span class="text-line-soft">|</span>
+            <i aria-hidden="true">/</i>
             <span>@Post.ReadTimeMinutes min</span>
+            @if (!string.IsNullOrEmpty(Post.Category))
+            {
+                <i aria-hidden="true">/</i>
+                <span>@Post.Category</span>
+            }
             @if (Post.Featured)
             {
-                <span class="text-gold">◆</span>
+                <i aria-hidden="true">/</i>
+                <span style="color:var(--zafaran)">lead</span>
             }
         </p>
-        <h3 class="text-lg font-semibold leading-snug group-hover:text-accent transition-colors duration-150">@Post.Title</h3>
-        <p class="text-sm text-muted leading-relaxed line-clamp-2">@Post.Description</p>
+        <h3>@Post.Title</h3>
+        <p class="line-clamp-2">@Post.Description</p>
     </a>
     @if (Post.Tags.Count > 0)
     {
-        <div class="px-5 pb-4 pt-1 flex flex-wrap gap-2">
+        <div class="node-tags">
             @foreach (var tag in Post.Tags)
             {
-                <a href="@(Base)/tags/@tag/" class="font-mono text-[0.6875rem] tracking-wide text-muted border border-line-soft rounded-sm px-2 py-0.5 hover:text-accent hover:border-accent transition-colors duration-150">#@tag</a>
+                <a class="chip" href="@(Base)/tags/@tag/">#@tag</a>
             }
         </div>
     }
@@ -27,4 +37,5 @@
 @code {
     [Parameter] public required PostSummary Post { get; set; }
     [Parameter] public string Base { get; set; } = "";
+    [Parameter] public int Index { get; set; } = 1;
 }

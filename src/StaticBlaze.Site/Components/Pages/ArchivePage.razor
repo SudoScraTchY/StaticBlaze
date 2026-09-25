@@ -1,33 +1,71 @@
-@* Chronological index, grouped by year: mono date rows. *@
-<SitePage Site=@Site Title="Archive" Description="@($"Every post on {Site.Title}, newest first")" Canonical="/archive/">
-        <h1 class="section-label mb-8" data-n="02">archive</h1>
-        @foreach (var group in Posts.GroupBy(p => p.Published.Year).OrderByDescending(g => g.Key))
-        {
-            <section class="mb-10">
-                <h2 class="font-mono text-sm text-gold tracking-widest mb-3">@group.Key</h2>
-                <ul class="border-t border-line">
-                    @foreach (var post in group)
+@* Archive: the shape of the writing, then the chronological list. *@
+<SitePage Site=@Site Title="Archive" Description=@PageDescription Canonical="/archive/"
+          SceneData=@SceneData PostsJson=@PostsJson>
+    <section class="sec wrap" style="padding-block-end:2rem">
+        <p class="eyebrow"><b>02</b>archive</p>
+        <h1 class="mt-4" style="font-size:var(--fs-xl)">The shape of it.</h1>
+    </section>
+
+    @if (Posts.Count > 0)
+    {
+        <section class="wrap" style="padding-block-end:2.5rem">
+            <figure class="panel" style="padding:1.25rem">
+                <figcaption id="density-caption" class="sr-only">Posts published per month, by year. The list below covers the same posts.</figcaption>
+                <div style="display:grid;gap:1rem" aria-hidden="true">
+                    @foreach (var group in Posts.GroupBy(p => p.Published.Year).OrderByDescending(g => g.Key))
                     {
-                        <li class="border-b border-line">
-                            <a href="@(Base + post.Url)" class="group flex items-baseline gap-4 py-3 px-1 hover:bg-accent-soft transition-colors duration-150">
-                                <span class="title-block shrink-0 w-20">@post.Published.ToString("MM-dd")</span>
-                                <span class="group-hover:text-accent transition-colors duration-150 font-medium truncate">@post.Title</span>
-                                <span class="title-block ml-auto shrink-0 hidden sm:inline">@post.ReadTimeMinutes min</span>
-                            </a>
-                        </li>
+                        var months = new int[12];
+                        foreach (var post in group) { months[post.Published.Month - 1]++; }
+                        <div style="display:grid;grid-template-columns:4rem 1fr;gap:.8rem;align-items:center">
+                            <span class="row-date">@group.Key</span>
+                            <span style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;align-items:end;height:2rem">
+                                @for (var m = 0; m < 12; m++)
+                                {
+                                    var lvl = months[m];
+                                    var h = lvl == 0 ? "22%" : lvl == 1 ? "50%" : lvl == 2 ? "76%" : "100%";
+                                    var bg = lvl == 0 ? "var(--raise)"
+                                        : lvl == 1 ? "color-mix(in oklab, var(--accent) 34%, var(--raise))"
+                                        : lvl == 2 ? "color-mix(in oklab, var(--accent) 68%, var(--raise))"
+                                        : "var(--accent)";
+                                    <i style="display:block;height:@h;border-radius:1px;background:@bg"></i>
+                                }
+                            </span>
+                        </div>
                     }
-                </ul>
-            </section>
-        }
+                </div>
+            </figure>
+        </section>
+    }
+
+    <section class="wrap" style="padding-block-end:clamp(3rem,7vw,6rem)">
+        <ul class="rows">
+            @{ var n = 0; }
+            @foreach (var post in Posts.OrderByDescending(p => p.Published))
+            {
+                n++;
+                <li>
+                    <a class="row" href="@(Base + post.Url)">
+                        <span class="row-idx">@n.ToString("000")</span>
+                        <span class="row-date">@post.Published.ToString("yyyy-MM-dd")</span>
+                        <span class="row-title">@post.Title</span>
+                        <span class="row-min">@post.ReadTimeMinutes min</span>
+                    </a>
+                </li>
+            }
+        </ul>
         @if (Posts.Count == 0)
         {
-            <p class="text-muted">Nothing published yet.</p>
+            <p style="color:var(--ink-dim)">Nothing published yet.</p>
         }
-    </SitePage>
+    </section>
+</SitePage>
 
 @code {
     [Parameter] public required SiteConfig Site { get; set; }
     [Parameter] public required IReadOnlyList<PostSummary> Posts { get; set; }
+    [Parameter] public string? SceneData { get; set; }
+    [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
 
     private string Base => Site.BasePath;
+    private string PageDescription => $"The full archive of {Site.Title}: a year by month density field showing when things were written, then every post in chronological order.";
 }

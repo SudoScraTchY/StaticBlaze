@@ -1,14 +1,23 @@
-<SitePage Site=@Site Title="Not found" Description="Page not found" Canonical="/404.html">
-        <div class="py-24 text-center">
-            <p class="font-mono text-gold tracking-widest text-sm">ERROR 404</p>
-            <h1 class="mt-3 text-4xl font-bold tracking-tight">This page does not exist.</h1>
-            <p class="mt-4 text-muted">The path you followed leads nowhere on this site.</p>
-            <a href="@(B)/" class="inline-block mt-8 font-mono text-sm text-accent hover:underline underline-offset-4">← back to posts</a>
-        </div>
+<SitePage Site=@Site Title="Signal lost" Description="That address does not resolve on this site. Recovery paths for a dead link: the index, the archive, or search." Canonical="/404.html" SceneData=@SceneData PostsJson=@PostsJson>
+        <section class="sec wrap" style="text-align:center">
+            <p class="eyebrow" style="justify-content:center"><b>404</b> no signal at this address</p>
+            <h1 class="mt-5" style="font-size:var(--fs-xl)">The path you followed leads nowhere on this site.</h1>
+            <p class="mt-4" style="color:var(--ink-dim);max-width:52ch;margin-inline:auto">
+                Nothing is broken on your end. The route simply is not in the field.
+                Try the index, or search the archive.
+            </p>
+            <div class="mt-8" style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap">
+                <a class="btn btn-solid" href="@(B)/posts/">open the index</a>
+                <a class="btn" href="@(B)/archive/">browse the archive</a>
+                <button type="button" class="btn" data-cmd-open>search</button>
+            </div>
+        </section>
     </SitePage>
 
 @code {
     [Parameter] public required SiteConfig Site { get; set; }
+    [Parameter] public string? SceneData { get; set; }
+    [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
 
     private string B => Site.BasePath;
 }

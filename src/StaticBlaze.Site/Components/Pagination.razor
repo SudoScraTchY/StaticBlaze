@@ -1,23 +1,31 @@
-@* Prev/next pagination over static /page/n/ URLs. *@
+@* Pagination. Keeps the same href contract as before: "/" for page 1, then /page/{n}/. *@
 @if (TotalPages > 1)
 {
-    <nav class="mt-12 flex items-center justify-between font-mono text-xs" aria-label="pagination">
+    <nav class="mt-12 flex items-center justify-between gap-4 font-mono text-xs" aria-label="pagination">
         @if (Page > 1)
         {
-            <a href="@Href(Page - 1)" class="text-accent hover:underline underline-offset-4">← prev</a>
+            <a href="@Href(Page - 1)" class="btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+                prev
+            </a>
         }
         else
         {
-            <span class="text-muted/50">← prev</span>
+            <span class="btn" style="opacity:.4;cursor:not-allowed" aria-hidden="true">prev</span>
         }
-        <span class="text-muted">@Page / @TotalPages</span>
+
+        <span style="color:var(--ink-faint);letter-spacing:.14em">@Page / @TotalPages</span>
+
         @if (Page < TotalPages)
         {
-            <a href="@Href(Page + 1)" class="text-accent hover:underline underline-offset-4">next →</a>
+            <a href="@Href(Page + 1)" class="btn">
+                next
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+            </a>
         }
         else
         {
-            <span class="text-muted/50">next →</span>
+            <span class="btn" style="opacity:.4;cursor:not-allowed" aria-hidden="true">next</span>
         }
     </nav>
 }

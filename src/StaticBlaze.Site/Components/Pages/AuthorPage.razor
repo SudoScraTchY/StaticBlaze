@@ -1,46 +1,69 @@
-<SitePage Site=@Site Title=@Author.Name Description=@Author.Bio Canonical=@CanonicalPath>
-        <header class="mb-10">
-            <p class="title-block mb-3"><a href="@(B)/about/" class="hover:text-accent transition-colors duration-150">about</a> / @Posts.Count posts</p>
-            <div class="flex items-center gap-5">
-                @if (Author.Avatar is { } avatar)
-                {
-                    <img src="@(B)/@avatar" alt=@Author.Name class="size-20 rounded border border-line object-cover" />
-                }
-                <div>
-                    <h1 class="text-3xl font-bold tracking-tight">@Author.Name</h1>
-                    <p class="title-block mt-2">@@@Author.Handle</p>
-                </div>
-            </div>
+@* Author, and the about route which is the same page for the default author. *@
+<SitePage Site=@Site Title=@PageTitle Description=@PageDescription Canonical=@CanonicalPath
+          SceneData=@SceneData PostsJson=@PostsJson>
+    <section class="sec wrap split split-7-5" style="align-items:start">
+        <div>
+            <p class="eyebrow"><b>01</b>@Author.Handle</p>
+            <h1 class="mt-4" style="font-size:var(--fs-xl)">@PageTitle</h1>
             @if (!string.IsNullOrEmpty(Author.Bio))
             {
-                <p class="text-muted mt-4 max-w-xl leading-relaxed">@Author.Bio</p>
+                <p class="mt-4" style="color:var(--ink-dim);max-width:56ch;font-size:var(--fs-md)">@Author.Bio</p>
             }
-            <div class="mt-4 flex flex-wrap gap-4 font-mono text-xs">
+            <div class="mt-6" style="display:flex;flex-wrap:wrap;gap:1rem">
                 @if (Author.Website is { } website)
                 {
-                    <a href=@website rel="me" class="text-accent hover:underline underline-offset-4">website</a>
+                    <a class="btn" href="@website" rel="me">website</a>
                 }
                 @foreach (var (network, handle) in Author.Social)
                 {
-                    <a href="https://@(network is "x" ? "x.com" : network + ".com")/@handle" rel="me" class="text-accent hover:underline underline-offset-4">@network</a>
+                    var host = network is "x" ? "x.com" : network + ".com";
+                    <a class="btn" href="https://@(host)/@handle" rel="me">@network</a>
                 }
             </div>
-            <div class="tile-rule mt-6 max-w-56 opacity-70" aria-hidden="true"></div>
-        </header>
+        </div>
+        <div class="sticky-side">
+            <div class="panel">
+                <p class="panel-head"><span>readout</span><span>02</span></p>
+                <div style="padding:1.25rem;display:flex;gap:2.5rem">
+                    <div>
+                        <span class="metric" data-count="@Posts.Count">@Posts.Count</span>
+                        <span class="metric-label">posts</span>
+                    </div>
+                    <div>
+                        <span class="metric" data-count="@TotalMinutes">@TotalMinutes</span>
+                        <span class="metric-label">minutes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <div class="grid sm:grid-cols-2 gap-4">
-            @foreach (var post in Posts)
+    <section class="wrap" style="padding-block-end:clamp(3rem,7vw,6rem)">
+        <div class="grid-nodes">
+            @for (var i = 0; i < Posts.Count; i++)
             {
-                <PostCard Post=@post Base=@B />
+                <PostCard Post=@Posts[i] Base=@B Index=@(i + 1) />
             }
         </div>
-    </SitePage>
+    </section>
+</SitePage>
 
 @code {
     [Parameter] public required SiteConfig Site { get; set; }
     [Parameter] public required AuthorRecord Author { get; set; }
     [Parameter] public required IReadOnlyList<PostSummary> Posts { get; set; }
+    /// <summary>Lets the /about/ route carry its own canonical instead of borrowing the author's.</summary>
+    [Parameter] public string? CanonicalOverride { get; set; }
+    [Parameter] public string? TitleOverride { get; set; }
+    [Parameter] public string? DescriptionOverride { get; set; }
+    [Parameter] public string? SceneData { get; set; }
+    [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
 
     private string B => Site.BasePath;
-    private string CanonicalPath => $"/authors/{Author.Handle}/";
+    private string CanonicalPath => CanonicalOverride ?? $"/authors/{Author.Handle}/";
+    private string PageTitle => TitleOverride ?? Author.Name;
+    private string PageDescription => DescriptionOverride ?? (string.IsNullOrWhiteSpace(Author.Bio)
+        ? $"{Author.Name} writes about systems, software and the tools in between at {Site.Title}."
+        : Author.Bio);
+    private int TotalMinutes => Posts.Sum(p => p.ReadTimeMinutes);
 }

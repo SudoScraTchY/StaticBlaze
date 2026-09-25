@@ -1,31 +1,39 @@
-@* Tag or category index: every term with its live post count. *@
-<SitePage Site=@Site Title=@Label Description="@($"All {Label.ToLowerInvariant()} on {Site.Title}")" Canonical=@CanonicalPath>
-        <h1 class="section-label mb-8" data-n="01">@Label.ToLowerInvariant()</h1>
-        <ul class="border-t border-line">
+@* Tag or category index, drawn as a weight field so density is visible rather than implied. *@
+<SitePage Site=@Site Title=@Label Description=@PageDescription Canonical=@CanonicalPath
+          SceneData=@SceneData PostsJson=@PostsJson>
+    <section class="sec wrap" style="padding-block-end:2rem">
+        <p class="eyebrow"><b>01</b>@Label.ToLowerInvariant()</p>
+        <h1 class="mt-4" style="font-size:var(--fs-xl)">@Terms.Count terms, weighted.</h1>
+    </section>
+
+    <section class="wrap" style="padding-block-end:clamp(3rem,7vw,6rem)">
+        <div class="field">
             @foreach (var term in Terms)
             {
-                <li class="border-b border-line">
-                    <a href="@(B)/@Kind/@term.Slug/" class="group flex items-baseline justify-between gap-4 py-3.5 px-1 hover:bg-accent-soft transition-colors duration-150">
-                        <span class="flex items-baseline gap-3 min-w-0">
-                            <span class="group-hover:text-accent transition-colors duration-150 font-medium truncate">@term.Title</span>
-                            @if (!string.IsNullOrEmpty(term.Description))
-                            {
-                                <span class="text-sm text-muted truncate hidden sm:inline">· @term.Description</span>
-                            }
-                        </span>
-                        <span class="title-block shrink-0">@term.Count</span>
-                    </a>
-                </li>
+                <a class="field-row" href="@(B)/@Kind/@term.Slug/">
+                    <span style="display:flex;align-items:baseline;gap:.5rem;min-width:0">
+                        <span style="font-size:var(--fs-sm);font-weight:500">@term.Title</span>
+                    </span>
+                    <span class="field-bar"><i style="--w:@(Percent(term.Count))%;width:@(Percent(term.Count))%"></i></span>
+                    <span class="field-n">@term.Count</span>
+                </a>
             }
-        </ul>
-    </SitePage>
+        </div>
+    </section>
+</SitePage>
 
 @code {
     [Parameter] public required SiteConfig Site { get; set; }
-    [Parameter] public required string Kind { get; set; }   // "tags" | "categories"
-    [Parameter] public required string Label { get; set; }  // "Tags" | "Categories"
+    [Parameter] public required string Kind { get; set; }
+    [Parameter] public required string Label { get; set; }
     [Parameter] public required IReadOnlyList<TermCount> Terms { get; set; }
+    [Parameter] public string? SceneData { get; set; }
+    [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
 
     private string CanonicalPath => $"/{Kind}/";
     private string B => Site.BasePath;
+    private string PageDescription => $"{Terms.Count} {Label.ToLowerInvariant()} on {Site.Title}, each weighted by how many posts carry it. Browse by subject instead of by date.";
+
+    private int MaxCount => Terms.Count == 0 ? 0 : Terms.Max(t => t.Count);
+    private int Percent(int count) => MaxCount <= 0 ? 0 : Math.Max(8, (int)Math.Round(count * 100.0 / MaxCount));
 }

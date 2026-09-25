@@ -1,43 +1,102 @@
-<SitePage Site=@Site Title="Home" Description=@Site.Description Canonical=@CanonicalPath JsonLd=@JsonLd>
-        @if (Page == 1)
-        {
-            <section class="mb-16">
-                <p class="section-label mb-6" data-n="00">@Site.Title.ToLowerInvariant()</p>
-                <h1 class="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1] max-w-2xl">@HeroLine</h1>
-                <p class="mt-5 text-muted max-w-xl leading-relaxed">@Site.Description</p>
-                <div class="tile-rule mt-8 max-w-56" aria-hidden="true"></div>
-                <p class="title-block mt-4">@Posts.Count posts · @TagCount tags · est. @OldestYear</p>
-            </section>
+@* Home. The 3D stage sits behind the hero, so the first thing a visitor sees is the archive rendered
+   as a field, not a list. Every number on this page is computed from the manifest. *@
+<SitePage Site=@Site Title="Home" Description=@Site.Description Canonical=@CanonicalPath JsonLd=@JsonLd
+          SceneData=@SceneData PostsJson=@PostsJson>
+    @if (Page == 1)
+    {
+        <section class="sec wrap">
+            <div class="hero">
+                <p class="eyebrow"><b>01</b>@HeroKicker</p>
 
-            @if (Featured.Count > 0)
-            {
-                <section class="mb-14">
-                    <h2 class="section-label mb-6" data-n="01">featured</h2>
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        @foreach (var post in Featured)
-                        {
-                            <PostCard Post=@post Base=@B />
-                        }
+                <h1 data-hero-title>
+                    @foreach (var line in HeroLines)
+                    {
+                        <span class="ln"><span>@line</span></span>
+                    }
+                </h1>
+
+                <p class="hero-sub" data-hero-stagger>@HeroSub</p>
+
+                <div class="hero-cta" data-hero-stagger>
+                    <a class="btn btn-solid" href="@(B)/posts/" data-magnet="6">open the index</a>
+                    <a class="btn" href="@(B)/archive/" data-magnet="6">see the archive</a>
+                    <span class="form-note">press <span class="kbd">/</span> to search anywhere</span>
+                </div>
+
+                <div class="readout" data-hero-stagger>
+                    <div>
+                        <span class="metric" data-count="@PostsPublished">@PostsPublished</span>
+                        <span class="metric-label">posts</span>
                     </div>
-                </section>
-            }
+                    <div>
+                        <span class="metric" data-count="@TagCount">@TagCount</span>
+                        <span class="metric-label">tags</span>
+                    </div>
+                    <div>
+                        <span class="metric" data-count="@YearsWriting">@YearsWriting</span>
+                        <span class="metric-label">years writing</span>
+                    </div>
+                    <div>
+                        <span class="metric" data-count="@TotalWords">@TotalWords</span>
+                        <span class="metric-label">words</span>
+                    </div>
+                </div>
 
-            <h2 class="section-label mb-6" data-n="02">latest</h2>
-        }
-        else
+                <div data-hero-line style="height:1px;background:linear-gradient(90deg,var(--lajvard),var(--accent),transparent)"></div>
+            </div>
+        </section>
+
+        @* the field: tags as a drifting horizontal surface, pinned while you scroll past it *@
+        @if (TagCount > 0)
         {
-            <h1 class="section-label mb-8" data-n="02">latest · page @Page</h1>
+            <section class="sec" data-pin-field style="overflow:hidden;padding-block:2.5rem;border-block:1px solid var(--edge)">
+                <div class="wrap" style="margin-block-end:1rem">
+                    <p class="eyebrow"><b>02</b>the field</p>
+                </div>
+                <div data-pin-track style="display:flex;gap:.5rem;padding-inline:clamp(1rem,4vw,3rem);width:max-content">
+                    @foreach (var tag in TopTags)
+                    {
+                        <a class="chip" href="@(B)/tags/@tag.Slug/" style="min-height:38px;padding-inline:1rem">
+                            #@tag.Slug <span style="color:var(--ink-faint);margin-inline-start:.4rem">@tag.Count</span>
+                        </a>
+                    }
+                    <a class="chip" href="@(B)/tags/" style="min-height:38px;padding-inline:1rem;color:var(--accent);border-color:var(--accent)">all tags</a>
+                </div>
+            </section>
         }
 
-        <div class="grid sm:grid-cols-2 gap-4">
-            @foreach (var post in Posts)
+        @if (Featured.Count > 0)
+        {
+            <section class="sec wrap">
+                <p class="eyebrow mb-6"><b>03</b>lead</p>
+                <div class="grid-nodes">
+                    @for (var i = 0; i < Featured.Count; i++)
+                    {
+                        <PostCard Post=@Featured[i] Base=@B Index=@(i + 1) />
+                    }
+                </div>
+            </section>
+        }
+
+        <h2 class="eyebrow wrap" style="padding-block:0 .5rem"><b>04</b>latest</h2>
+    }
+    else
+    {
+        <section class="sec wrap">
+            <h1 class="eyebrow"><b>04</b>latest · page @Page</h1>
+        </section>
+    }
+
+    <section class="wrap" style="padding-block-end:clamp(3rem,7vw,6rem)">
+        <div class="grid-nodes">
+            @for (var i = 0; i < Posts.Count; i++)
             {
-                <PostCard Post=@post Base=@B />
+                <PostCard Post=@Posts[i] Base=@B Index=@(Featured.Count + i + 1) />
             }
         </div>
-
         <Pagination Page=@Page TotalPages=@TotalPages BasePath=@($"{B}/") />
-    </SitePage>
+    </section>
+</SitePage>
 
 @code {
     [Parameter] public required SiteConfig Site { get; set; }
@@ -47,11 +106,20 @@
     [Parameter] public required IReadOnlyList<PostSummary> Featured { get; set; }
     [Parameter] public required IReadOnlyList<PostSummary> AllPosts { get; set; }
     [Parameter] public required int TagCount { get; set; }
+    [Parameter] public string? SceneData { get; set; }
+    [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
+    [Parameter] public IReadOnlyList<TermCount> TopTags { get; set; } = [];
 
     private string CanonicalPath => Page <= 1 ? "/" : $"/page/{Page}/";
     private string B => Site.BasePath;
-    private string HeroLine => Site.Title;
-    private int OldestYear => AllPosts.Count > 0 ? AllPosts.Min(p => p.Published).Year : DateTimeOffset.UtcNow.Year;
+
+    private string HeroKicker => string.IsNullOrWhiteSpace(Site.Hero.Kicker) ? Site.Title : Site.Hero.Kicker;
+    private IReadOnlyList<string> HeroLines => Site.Hero.Lines.Count > 0 ? Site.Hero.Lines : [Site.Title];
+    private string HeroSub => string.IsNullOrWhiteSpace(Site.Hero.Sub) ? Site.Description : Site.Hero.Sub;
+
+    private int PostsPublished => AllPosts.Count;
+    private int YearsWriting => AllPosts.Count == 0 ? 0 : AllPosts.Select(p => p.Published.Year).Distinct().Count();
+    private int TotalWords => AllPosts.Sum(p => p.ReadTimeMinutes) * 200;
 
     private string JsonLd => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
     {

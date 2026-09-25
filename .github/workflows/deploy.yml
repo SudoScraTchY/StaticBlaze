@@ -3,7 +3,7 @@ name: deploy
 on:
   push:
     branches: [main]
-    paths: ['content/**', 'src/**', 'styles/**', '.github/workflows/deploy.yml']
+    paths: ['content/**', 'src/**', 'styles/**', 'tools/**', '.github/workflows/deploy.yml']
   workflow_dispatch:
 
 permissions:
@@ -52,7 +52,12 @@ jobs:
           -i styles/admin.css -o src/StaticBlaze.Admin/wwwroot/assets/admin.css --minify
 
       - name: Generate site
-        run: dotnet run --project src/StaticBlaze.Generator -- --content content --out dist
+        # --css ships the built stylesheet as part of generation, so no hand copy is needed later.
+        # the generator also copies styles/vendor (GSAP + Three.js) into dist/assets/vendor itself.
+        run: >
+          dotnet run --project src/StaticBlaze.Generator --
+          --content content --out dist --css dist-assets/site.css
+          --static styles/static --vendor styles/vendor --fonts styles/fonts
 
       - name: Publish admin
         run: dotnet publish src/StaticBlaze.Admin -c Release -o admin-published
@@ -61,11 +66,28 @@ jobs:
         run: |
           # serve the admin under the project-pages subpath
           sed -i 's|<base href="/" />|<base href="/StaticBlaze/admin/" />|' admin-published/wwwroot/index.html
-          cp dist-assets/site.css dist/assets/site.css
           mkdir -p dist/admin
           cp -r admin-published/wwwroot/* dist/admin/
           echo > dist/.nojekyll
           # custom domain: echo "your.domain" > dist/CNAME
+
+      - name: Quality gates
+        # these scripts exit non-zero on failure, so a stale route, a broken internal link, a duplicate
+        # canonical, a thin meta description, leftover tokens from a previous design, or a colour-mix
+        # surface that would render transparent on an engine without @supports all fail the build.
+        # run after assembly so dist/admin/ exists and the internal link check sees the whole tree.
+        run: |
+          test -s dist/assets/site.css || { echo "dist/assets/site.css is missing or empty"; exit 1; }
+          test -s dist/assets/vendor/gsap.min.js || { echo "vendored GSAP is missing"; exit 1; }
+          test -s dist/assets/vendor/three.module.min.js || { echo "vendored Three.js is missing"; exit 1; }
+          test -s dist/assets/motion.js || { echo "motion.js is missing"; exit 1; }
+          test -s dist/assets/scene.js || { echo "scene.js is missing"; exit 1; }
+          node tools/audit-site.mjs dist
+          node tools/check-crossengine.mjs dist/assets/site.css
+          # note: tools/parity.mjs needs the previous revision's build, so it is a local gate:
+          #   git worktree add /tmp/prev HEAD~1 --detach
+          #   dotnet run --project /tmp/prev/src/StaticBlaze.Generator -- --content /tmp/prev/content --out /tmp/prev-dist
+          #   node tools/parity.mjs /tmp/prev-dist dist
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

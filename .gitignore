@@ -273,6 +273,11 @@ __pycache__/
 /tools/node-tools/node_modules/
 !/tools/serve.mjs
 !/tools/get-fonts.ps1
+# project tooling: the build helpers and the verification gates are part of the repository.
+# /tools/* above excludes this directory, so each kind of script needs its own negation or CI
+# cannot find the gates it runs.
+!/tools/*.mjs
+!/tools/*.ps1
 .zcode/
 *.exe
 

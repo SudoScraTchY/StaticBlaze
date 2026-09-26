@@ -1,5 +1,5 @@
-/* Import tailwind directly from the pinned toolchain (tools/node-tools) so
-   local builds and CI resolve identically, with no root node_modules. */
+/* Admin app. Same Deep Field tokens as the published site, so the authoring surface reads as the
+   same instrument. Import tailwind from the pinned toolchain so local and CI resolve identically. */
 @import "../tools/node-tools/node_modules/tailwindcss/index.css";
 @import "./_tokens.css";
 
@@ -7,86 +7,62 @@
 
 @layer base {
   html {
-    background-color: var(--bg);
-    color: var(--fg);
-    font-family: var(--font-sans);
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--family-sans);
     -webkit-font-smoothing: antialiased;
   }
-  ::selection {
-    background: var(--accent);
-    color: var(--bg);
-  }
+  :lang(fa), :lang(ar), :lang(he), :lang(ur) { font-family: var(--family-persian); letter-spacing: 0 !important; }
+  ::selection { background: var(--accent); color: var(--ground); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--r-1); }
+  button, input, textarea, select { border-radius: var(--r-2); }
 }
 
 .section-label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
 }
-.section-label::before {
-  content: attr(data-n);
-  color: var(--gold);
-}
-.section-label::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
+.section-label::before { content: attr(data-n); color: var(--zafaran); }
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--edge-2); }
 
-.tile-rule {
-  height: 2px;
-  background: linear-gradient(90deg, #1c39bb, #00a693);
-}
+.title-block { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--ink-faint); letter-spacing: 0.08em; }
+.tile-rule { height: 1px; background: linear-gradient(90deg, var(--lajvard), var(--accent), transparent); }
+
+/* legacy aliases so the existing admin pages keep resolving against the new palette */
+:root { --bg: var(--ground); --surface: var(--panel); --fg: var(--ink); --muted: var(--ink-dim);
+        --line: var(--edge-2); --line-soft: var(--edge); --accent-soft: var(--accent-soft); --gold: var(--zafaran); }
 
 input, textarea, select {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--fg);
-  border-radius: 4px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9375rem;
+  background: var(--ground-2);
+  border: 1px solid var(--edge-2);
+  color: var(--ink);
+  padding: 0.6rem 0.8rem;
+  font-size: var(--fs-sm);
+  min-height: 44px;
 }
-input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 1px solid var(--accent);
-  outline-offset: 1px;
-}
+input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
 label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim);
 }
 
 .btn {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  color: var(--fg);
-  background: var(--surface);
-  cursor: pointer;
-  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 44px; padding-inline: 1.1rem;
+  font-family: var(--family-mono); font-size: var(--fs-xs); font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid var(--edge-2); background: transparent; color: var(--ink); cursor: pointer;
+  transition: color var(--d-2) var(--e-out), border-color var(--d-2) var(--e-out), background-color var(--d-2) var(--e-out);
 }
 .btn:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
-}
-.btn-primary:hover:not(:disabled) { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--bg); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--ground); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--ground); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 4px;
+.card { background: var(--panel); border: 1px solid var(--edge); border-radius: var(--r-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

@@ -4,5 +4,9 @@
   { "slug": "static-sites", "title": "Static Sites", "description": "Sites that are just files, the way the web intended." },
   { "slug": "design", "title": "Design", "description": "Type, color, structure." },
   { "slug": "github", "title": "GitHub", "description": "Using the repository as a database." },
-  { "slug": "markdown", "title": "Markdown", "description": "Plain text that grows up into pages." }
+  { "slug": "markdown", "title": "Markdown", "description": "Plain text that grows up into pages." },
+  { "slug": "github-actions", "title": "GitHub Actions", "description": "The pipeline that builds and publishes this site on every push." },
+  { "slug": "github-pages", "title": "GitHub Pages", "description": "Where the generated site is hosted for free." },
+  { "slug": "deployment", "title": "Deployment", "description": "Getting the build from CI onto the live URL, and back again when needed." },
+  { "slug": "testing", "title": "Testing", "description": "Proving the pipeline works by exercising it, not asserting it." }
 ]

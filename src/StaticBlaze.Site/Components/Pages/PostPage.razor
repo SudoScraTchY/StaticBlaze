@@ -102,10 +102,26 @@
                 </div>
             </section>
         }
-    </article>
+    @* Comments via GitHub Discussions (giscus). Rendered only when site.json configures it, so
+       an unconfigured blog shows nothing at all rather than a broken widget. The section is
+       written with data-* attributes; site.js mounts the iframe when the config is complete. *@
+    @if (Comments is { Enabled: true })
+    {
+        var c = Comments;
+        <section class="comments" data-comments
+                 data-repo="@c.Repo" data-repo-id="@c.RepoId" data-category="@c.Category"
+                 data-category-id="@c.CategoryId" data-mapping="@c.Mapping"
+                 data-theme="@c.Theme" data-lang="@c.Lang">
+            <p class="eyebrow"><b>06</b>comments</p>
+            <div class="comments-frame" data-comments-frame>
+                <p class="form-note">Comments load from GitHub Discussions. They appear once giscus is configured in <code>content/site.json</code>.</p>
+            </div>
+        </section>
+    }    </article>
 </SitePage>
 
 @code {
+    [Parameter] public StaticBlaze.Core.Models.GiscusConfig? Comments { get; set; }
     [Parameter] public required SiteConfig Site { get; set; }
     [Parameter] public required Post Post { get; set; }
     [Parameter] public AuthorRecord? Author { get; set; }

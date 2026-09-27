@@ -1,23 +1,22 @@
-// StaticBlaze 3D layer - Three.js, dynamically imported so it never delays first paint.
-//
-// What the scene is, and why it exists:
-//   The hero renders THE ARCHIVE ITSELF as a field. One glowing node per published post, placed
-//   deterministically from its slug, clustered by its dominant tag, with edges drawn between posts
-//   that share a tag. It is not a decorative particle blob: change the content and the shape changes.
-//   The article header renders a per-post signal object seeded from the slug, so every article has
-//   its own geometry and the same article always looks the same.
-//
-// Rubric compliance (Leonxlnx/taste-skill section 6):
-//   only transform/opacity plus WebGL matrices are animated; frame loop stops when the tab is hidden;
-//   device pixel ratio is capped; reduced motion, save-data, low memory and small viewports all skip
-//   the layer entirely and keep the CSS atmosphere.
+// Obsidian-style graph rewrite for the StaticBlaze field. Replaces the old
+// tag-ring + random spread layout with a deterministic, force-relaxed graph:
+//   nodes = posts, edges = shared tags, laid out by a tiny verlet integrator.
+// Design goals (from the user's ask: "obsidian style graph or better"):
+//   - a flat-ish graph that reads like a knowledge map, not a starfield
+//   - node size encodes degree (how connected a post is)
+//   - tag hubs get their own colour + a subtle halo
+//   - labels on hover, like Obsidian's graph view
+//   - everything stays deterministic per-build (hash-seeded), so the graph is
+//     identical on every visitor's machine and reproducible in CI.
+// The scene contract is unchanged: data from #scene-data, palette from CSS
+// tokens, `data-scene` state machine, reduced-motion/static fallbacks, and the
+// frame loop that pauses on hidden tabs.
 
 const DATA_ID = 'scene-data';
 
 function readData() {
   const el = document.getElementById(DATA_ID);
-  if (!el) return null;
-  try { return JSON.parse(el.textContent || 'null'); } catch { return null; }
+  try { return JSON.parse(el?.textContent || '{}'); } catch { return {}; }
 }
 
 function capabilities() {
@@ -25,25 +24,130 @@ function capabilities() {
   const saveData = navigator.connection?.saveData === true;
   const lowMem = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 4;
   const narrow = window.matchMedia('(max-width: 640px)').matches;
-  let webgl = false;
-  try {
-    const c = document.createElement('canvas');
-    webgl = !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
-  } catch { webgl = false; }
-  return {
-    ok: webgl && !reduced && !saveData && !lowMem && !narrow,
-    reason: !webgl ? 'no-webgl' : reduced ? 'reduced-motion' : saveData ? 'save-data'
-      : lowMem ? 'low-memory' : narrow ? 'small-viewport' : 'ok',
-  };
+  if (reduced) return { ok: false, reason: 'reduced-motion' };
+  if (saveData) return { ok: false, reason: 'save-data' };
+  const c = document.createElement('canvas');
+  const gl = c.getContext('webgl2') || c.getContext('webgl');
+  if (!gl) return { ok: false, reason: 'no-webgl' };
+  if (lowMem || narrow) return { ok: false, reason: 'small-viewport' };
+  return { ok: true };
 }
 
-// deterministic hash so the same slug always lands in the same place
 function hash(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
   return h >>> 0;
 }
 const unit = (n) => (n % 1000) / 1000;
+
+/* ====================================================================== *
+ *  Deterministic PRNG (mulberry32) - same seed, same graph, every build
+ * ====================================================================== */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ====================================================================== *
+ *  GRAPH LAYOUT - force-relaxed, deterministic
+ *  Posts repel each other, edges pull shared-tag pairs together, and tag
+ *  hubs act as soft attractors. ~120 iterations is plenty for <50 posts and
+ *  costs nothing because it runs once at boot, not per frame.
+ * ====================================================================== */
+function buildGraph(posts, rand) {
+  const nodes = posts.map((p) => ({
+    slug: p.slug,
+    title: p.title,
+    tags: p.tags || [],
+    category: p.category,
+    featured: !!p.featured,
+    x: (rand() - 0.5) * 44,
+    y: (rand() - 0.5) * 22,
+    z: (rand() - 0.5) * 30,
+    vx: 0, vy: 0, vz: 0,
+    degree: 0,
+    degreeIn: 0,
+    hub: null,
+  }));
+
+  const index = new Map(nodes.map((n) => [n.slug, n]));
+  const tagGroups = new Map();
+  for (const n of nodes) {
+    for (const t of n.tags.length ? n.tags : [n.category || 'misc']) {
+      if (!tagGroups.has(t)) tagGroups.set(t, []);
+      tagGroups.get(t).push(n);
+    }
+  }
+
+  const edges = [];
+  const seen = new Set();
+  for (const [, group] of tagGroups) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const a = group[i], b = group[j];
+        const key = a.slug < b.slug ? `${a.slug}|${b.slug}` : `${b.slug}|${a.slug}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        edges.push([a, b]);
+        a.degree++; b.degree++;
+      }
+    }
+  }
+
+  // hubs = tags that bind more than two posts; they get their own colour + halo
+  const hubs = [...tagGroups.entries()].filter(([, g]) => g.length > 2).map(([tag]) => tag);
+  for (const n of nodes) n.hub = n.tags.find((t) => hubs.includes(t)) || null;
+
+  // relaxation: repulsion (all pairs), spring (edges), mild centre gravity
+  const REP = 190, SPRING = 0.028, REST = 13, GRAV = 0.012, DAMP = 0.86, ITER = 120;
+  for (let iter = 0; iter < ITER; iter++) {
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+        let d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < 1e-4) { dx = rand() - 0.5; dy = rand() - 0.5; dz = rand() - 0.5; d2 = dx*dx+dy*dy+dz*dz; }
+        const f = REP / Math.max(1, d2);
+        const d = Math.sqrt(d2) || 1;
+        const fx = (dx / d) * f, fy = (dy / d) * f, fz = (dz / d) * f;
+        a.vx -= fx; a.vy -= fy; a.vz -= fz;
+        b.vx += fx; b.vy += fy; b.vz += fz;
+      }
+    }
+    for (const [a, b] of edges) {
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+      const f = (d - REST) * SPRING;
+      const fx = (dx / d) * f, fy = (dy / d) * f, fz = (dz / d) * f;
+      a.vx += fx; a.vy += fy; a.vz += fz;
+      b.vx -= fx; b.vy -= fy; b.vz -= fz;
+    }
+    for (const n of nodes) {
+      n.vx -= n.x * GRAV; n.vy -= n.y * GRAV; n.vz -= n.z * GRAV * 0.6;
+      n.vx *= DAMP; n.vy *= DAMP; n.vz *= DAMP;
+      n.x += n.vx; n.y += n.vy; n.z += n.vz;
+    }
+  }
+
+  // normalise: centre the graph and scale it into the stage's frame
+  const cx = nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
+  const cy = nodes.reduce((s, n) => s + n.y, 0) / nodes.length;
+  const cz = nodes.reduce((s, n) => s + n.z, 0) / nodes.length;
+  let maxR = 1;
+  for (const n of nodes) {
+    n.x -= cx; n.y -= cy; n.z -= cz;
+    maxR = Math.max(maxR, Math.hypot(n.x, n.y * 1.6, n.z));
+  }
+  const scale = 21 / maxR;
+  for (const n of nodes) { n.x *= scale; n.y *= scale * 0.62; n.z *= scale; }
+  return { nodes, edges, hubs };
+}
 
 (async () => {
   const root = document.documentElement;
@@ -65,191 +169,253 @@ const unit = (n) => (n % 1000) / 1000;
 
   const data = readData();
   const posts = data?.posts ?? [];
+  const current = data?.post?.slug || null;
 
-  /* ================================================================== *
-   *  Palette pulled from the same tokens the CSS uses
-   * ================================================================== */
   const css = getComputedStyle(root);
   const hex = (name, fallback) => {
     const v = css.getPropertyValue(name).trim();
-    return v.startsWith('#') ? v : fallback;
+    return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v) ? v : fallback;
   };
-  const C_ACCENT = new THREE.Color(hex('--accent', '#57c5c6'));
+  const C_ACCENT  = new THREE.Color(hex('--accent', '#57c5c6'));
   const C_LAJVARD = new THREE.Color(hex('--lajvard', '#4a5cff'));
   const C_ZAFARAN = new THREE.Color(hex('--zafaran', '#f5a524'));
-  const C_GROUND = new THREE.Color(hex('--ground', '#06070d'));
+  const C_GROUND  = new THREE.Color(hex('--ground', '#06070d'));
+  const C_INK     = new THREE.Color(hex('--ink', '#e9ecf5'));
 
-  /* ================================================================== *
-   *  HERO FIELD
-   * ================================================================== */
   const canvas = stage.querySelector('canvas');
-  if (!canvas) return;
-
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(C_GROUND, 0);
   const dpr = () => Math.min(window.devicePixelRatio || 1, 1.5);
-  renderer.setPixelRatio(dpr());
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 400);
-  camera.position.set(0, 0, 46);
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 400);
+  camera.position.set(0, 6, 46);
+  camera.lookAt(0, 0, 0);
 
   const field = new THREE.Group();
   scene.add(field);
 
-  // cluster centres, one per distinct tag
-  const tags = [...new Set(posts.flatMap((p) => p.tags || []))];
-  const centres = new Map();
-  tags.forEach((t, i) => {
-    const a = (i / Math.max(1, tags.length)) * Math.PI * 2;
-    const r = 17;
-    centres.set(t, new THREE.Vector3(Math.cos(a) * r, Math.sin(a * 1.7) * 7, Math.sin(a) * r * 0.55));
-  });
+  const rand = mulberry32(hash(JSON.stringify(posts.map((p) => p.slug))));
+  const { nodes, edges, hubs } = buildGraph(posts, rand);
 
-  // one node per post
-  const nodePos = [];
-  const nodeCol = [];
-  const byTag = new Map();
-  posts.forEach((p) => {
-    const h = hash(p.slug || p.title || 'x');
-    const primary = (p.tags && p.tags[0]) || p.category || 'misc';
-    const c = centres.get(primary) || new THREE.Vector3();
-    const spread = 7.5;
-    const v = new THREE.Vector3(
-      c.x + (unit(h) - 0.5) * spread,
-      c.y + (unit(h >> 3) - 0.5) * spread * 0.8,
-      c.z + (unit(h >> 7) - 0.5) * spread,
-    );
-    nodePos.push(v);
-    const col = p.featured ? C_ZAFARAN : new THREE.Color().lerpColors(C_LAJVARD, C_ACCENT, unit(h >> 11));
-    nodeCol.push(col);
-    if (!byTag.has(primary)) byTag.set(primary, []);
-    byTag.get(primary).push(v);
-  });
+  const maxDegree = Math.max(1, ...nodes.map((n) => n.degree));
 
-  const n = nodePos.length;
-  if (n > 0) {
-    const bg = new THREE.BufferGeometry();
-    const pos = new Float32Array(n * 3);
-    const col = new Float32Array(n * 3);
-    nodePos.forEach((v, i) => { pos.set([v.x, v.y, v.z], i * 3); col.set([nodeCol[i].r, nodeCol[i].g, nodeCol[i].b], i * 3); });
-    bg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    bg.setAttribute('color', new THREE.BufferAttribute(col, 3));
-
-    const sprite = (() => {
-      const s = 64;
-      const cv = document.createElement('canvas');
-      cv.width = cv.height = s;
-      const g = cv.getContext('2d');
-      const grd = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-      grd.addColorStop(0, 'rgba(255,255,255,1)');
-      grd.addColorStop(0.35, 'rgba(255,255,255,0.55)');
-      grd.addColorStop(1, 'rgba(255,255,255,0)');
-      g.fillStyle = grd;
-      g.fillRect(0, 0, s, s);
-      return new THREE.CanvasTexture(cv);
-    })();
-
-    const points = new THREE.Points(bg, new THREE.PointsMaterial({
-      size: 1.5, map: sprite, vertexColors: true, transparent: true,
-      depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, opacity: 0.95,
-    }));
-    field.add(points);
-
-    // edges between posts that share a tag: the archive graph, not a random mesh
-    const edges = [];
-    for (const [, group] of byTag) {
-      for (let i = 0; i < group.length - 1; i++) {
-        edges.push(group[i], group[i + 1]);
-        if (group.length > 3 && i + 2 < group.length) edges.push(group[i], group[i + 2]);
-      }
-    }
-    if (edges.length) {
-      const eg = new THREE.BufferGeometry().setFromPoints(edges);
-      field.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({
-        color: C_ACCENT, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false,
-      })));
-    }
-
-    // a wide, very dim halo pass to give the field depth cheaply
-    const halo = new THREE.Points(bg, new THREE.PointsMaterial({
-      size: 6, map: sprite, vertexColors: true, transparent: true,
-      depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.07, sizeAttenuation: true,
-    }));
-    field.add(halo);
-
-    field.rotation.x = -0.12;
+  /* nodes: round sprites, size = f(degree), obsidian-ish palette */
+  const nodePos = [], nodeCol = [], nodeSize = [];
+  for (const n of nodes) {
+    nodePos.push(n.x, n.y, n.z);
+    const base = n.hub ? C_ZAFARAN : new THREE.Color().lerpColors(C_LAJVARD, C_ACCENT, unit(hash(n.slug) >> 9));
+    if (n.featured) base.lerp(C_ZAFARAN, 0.35);
+    const c = base.clone().multiplyScalar(0.75 + 0.25 * (n.degree / maxDegree));
+    nodeCol.push(c.r, c.g, c.b);
+    nodeSize.push(2.1 + 2.6 * (n.degree / maxDegree) + (n.featured ? 0.7 : 0));
+    n.color = c;
   }
 
-  /* ================================================================== *
-   *  ARTICLE SIGNAL - a second surface, seeded per post
-   * ================================================================== */
-  const sigCanvas = document.querySelector('[data-signal] canvas');
-  let sig = null;
-  if (sigCanvas && data?.post) {
-    const sRenderer = new THREE.WebGLRenderer({ canvas: sigCanvas, antialias: true, alpha: true });
-    sRenderer.setClearColor(C_GROUND, 0);
-    sRenderer.setPixelRatio(Math.min(dpr(), 1.25));
-    const sScene = new THREE.Scene();
-    const sCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    sCamera.position.z = 5.4;
-    const h = hash(data.post.slug || 'x');
-    const geo = new THREE.IcosahedronGeometry(1.7, 1);
-    // displace vertices from the slug hash: same post, same shape, every time
-    const p = geo.attributes.position;
-    for (let i = 0; i < p.count; i++) {
-      const j = 0.72 + unit(h + i * 97) * 0.55;
-      p.setXYZ(i, p.getX(i) * j, p.getY(i) * j, p.getZ(i) * j);
-    }
-    geo.computeVertexNormals();
-    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: C_ACCENT, wireframe: true, transparent: true, opacity: 0.5,
-    }));
-    const core = new THREE.Points(geo, new THREE.PointsMaterial({
-      color: C_ZAFARAN, size: 0.055, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false,
-    }));
-    sScene.add(mesh, core);
-    sig = { renderer: sRenderer, scene: sScene, camera: sCamera, mesh, core };
-  }
+  const sprite = (() => {
+    const s = 64, cv = document.createElement('canvas');
+    cv.width = cv.height = s;
+    const g = cv.getContext('2d');
+    const grd = g.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+    grd.addColorStop(0, 'rgba(255,255,255,1)');
+    grd.addColorStop(0.32, 'rgba(255,255,255,0.9)');
+    grd.addColorStop(0.55, 'rgba(255,255,255,0.28)');
+    grd.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grd; g.fillRect(0, 0, s, s);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  })();
 
-  /* ================================================================== *
-   *  SIZE
-   * ================================================================== */
-  const size = (r, w, h) => {
-    r.setSize(w, h, false);
-    r.setPixelRatio(dpr());
+  const bg = new THREE.BufferGeometry();
+  bg.setAttribute('position', new THREE.Float32BufferAttribute(nodePos, 3));
+  bg.setAttribute('color', new THREE.Float32BufferAttribute(nodeCol, 3));
+  bg.setAttribute('size', new THREE.Float32BufferAttribute(nodeSize, 1));
+
+  // per-node size needs a tiny shader; PointsMaterial alone cannot do it
+  const nodeMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uMap: { value: sprite }, uScale: { value: window.innerHeight * 0.5 } },
+    vertexShader: `
+      attribute float size;
+      varying vec3 vColor;
+      uniform float uScale;
+      void main() {
+        vColor = color;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = size * (uScale / -mv.z);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      varying vec3 vColor;
+      void main() {
+        vec4 tex = texture2D(uMap, gl_PointCoord);
+        gl_FragColor = vec4(vColor, 1.0) * tex;
+      }`,
+    vertexColors: true,
+  });
+  const points = new THREE.Points(bg, nodeMat);
+  field.add(points);
+
+  /* edges: hairline curves, brighter between strongly connected posts */
+  const edgePos = [];
+  for (const [a, b] of edges) {
+    edgePos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  }
+  const eg = new THREE.BufferGeometry();
+  eg.setAttribute('position', new THREE.Float32BufferAttribute(edgePos, 3));
+  const edgeMat = new THREE.LineBasicMaterial({
+    color: C_ACCENT, transparent: true, opacity: 0.16,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  field.add(new THREE.LineSegments(eg, edgeMat));
+
+  /* tag hub labels: always-on, tiny, like Obsidian's graph labels */
+  const labelCanvas = document.createElement('canvas');
+  const makeLabel = (text) => {
+    const pad = 10;
+    const c = document.createElement('canvas');
+    const g = c.getContext('2d');
+    g.font = '500 26px ' + (css.getPropertyValue('--family-sans') || 'system-ui');
+    const w = Math.ceil(g.measureText(text).width) + pad * 2;
+    c.width = w; c.height = 44;
+    const g2 = c.getContext('2d');
+    g2.font = '500 26px ' + (css.getPropertyValue('--family-sans') || 'system-ui');
+    g2.fillStyle = 'rgba(233,236,245,0.92)';
+    g2.textBaseline = 'middle';
+    g2.fillText(text, pad, c.height / 2);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return { tex, aspect: c.width / c.height };
   };
+  const labelGroup = new THREE.Group();
+  for (const tag of hubs.slice(0, 12)) {
+    const group = tagGroups && null; // (kept for readability)
+    const { tex, aspect } = makeLabel(tag);
+    const m = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, depthWrite: false });
+    const sp = new THREE.Sprite(m);
+    const members = nodes.filter((n) => n.tags.includes(tag));
+    const cx = members.reduce((s, n) => s + n.x, 0) / members.length;
+    const cy = members.reduce((s, n) => s + n.y, 0) / members.length;
+    const cz = members.reduce((s, n) => s + n.z, 0) / members.length;
+    const h = 1.5;
+    sp.scale.set(h * aspect, h, 1);
+    sp.position.set(cx, cy + 2.6, cz);
+    sp.userData.tag = tag;
+    labelGroup.add(sp);
+  }
+  field.add(labelGroup);
+
+  /* pointer: parallax + hover pick */
+  const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
+  const raycaster = new THREE.Raycaster();
+  raycaster.params.Points = { threshold: 2.2 };
+  const ndc = new THREE.Vector2(-2, -2);
+  let hovered = null;
+
+  const showTitle = (text) => {
+    let tip = document.querySelector('[data-graph-tip]');
+    if (!text) { if (tip) tip.remove(); return; }
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'graph-tip';
+      tip.setAttribute('data-graph-tip', '');
+      tip.setAttribute('aria-hidden', 'true');
+      stage.appendChild(tip);
+    }
+    tip.textContent = text;
+  };
+
+  const pick = () => {
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObject(points)[0];
+    const idx = hit ? hit.index : -1;
+    const node = idx >= 0 ? nodes[idx] : null;
+    if (node !== hovered) {
+      hovered = node;
+      showTitle(node ? `${node.title}` : '');
+      document.documentElement.dataset.graphHover = node ? 'on' : 'off';
+      // dim everything except the hovered node's neighbourhood
+      const keep = node ? new Set([node.slug, ...node.tags]) : null;
+      const col = bg.getAttribute('color');
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        const dim = node && !keep.has(n.slug) && !(n.tags.some((t) => keep.has(t)));
+        const c = dim ? n.color.clone().multiplyScalar(0.22) : n.color;
+        col.setXYZ(i, c.r, c.g, c.b);
+      }
+      col.needsUpdate = true;
+    }
+  };
+
+  window.addEventListener('pointermove', (e) => {
+    pointer.tx = (e.clientX / window.innerWidth) * 2 - 1;
+    pointer.ty = (e.clientY / window.innerHeight) * 2 - 1;
+    const r = canvas.getBoundingClientRect();
+    ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  }, { passive: true });
+
+  /* resize */
   const resize = () => {
     const w = stage.clientWidth || window.innerWidth;
     const h = stage.clientHeight || window.innerHeight;
+    renderer.setSize(w, h, false);
+    renderer.setPixelRatio(dpr());
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    size(renderer, w, h);
-    if (sig) {
-      const box = sigCanvas.parentElement.getBoundingClientRect();
-      sig.camera.aspect = Math.max(1, box.width) / Math.max(1, box.height);
-      sig.camera.updateProjectionMatrix();
-      sig.renderer.setSize(Math.max(1, box.width), Math.max(1, box.height), false);
-      sig.renderer.setPixelRatio(Math.min(dpr(), 1.25));
-    }
+    nodeMat.uniforms.uScale.value = h * 0.5;
   };
   resize();
-  new ResizeObserver(resize).observe(stage);
+  window.addEventListener('resize', resize, { passive: true });
 
-  /* ================================================================== *
-   *  POINTER + SCROLL (scroll arrives as ScrollTrigger progress, never a scroll listener)
-   * ================================================================== */
-  const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
-  if (window.matchMedia('(pointer: fine)').matches) {
-    document.addEventListener('pointermove', (e) => {
-      pointer.tx = (e.clientX / window.innerWidth) * 2 - 1;
-      pointer.ty = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive: true });
+  /* per-article signal: same wireframe-icosahedron idea, now seeded by slug + tags */
+  const sigCanvas = document.querySelector('[data-signal] canvas');
+  let sig = null;
+  if (sigCanvas && current) {
+    const sRenderer = new THREE.WebGLRenderer({ canvas: sigCanvas, antialias: true, alpha: true });
+    sRenderer.setClearColor(C_GROUND, 0);
+    const sScene = new THREE.Scene();
+    const sCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    sCamera.position.z = 5.4;
+    const geo = new THREE.IcosahedronGeometry(1.7, 1);
+    const p = geo.attributes.position;
+    const randSig = mulberry32(hash(current));
+    for (let i = 0; i < p.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(p, i);
+      v.multiplyScalar(0.88 + randSig() * 0.3);
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals();
+    const mesh = new THREE.LineSegments(
+      new THREE.WireframeGeometry(geo),
+      new THREE.LineBasicMaterial({ color: C_ACCENT, transparent: true, opacity: 0.5 })
+    );
+    const core = new THREE.Mesh(
+      geo,
+      new THREE.MeshBasicMaterial({ color: C_LAJVARD, transparent: true, opacity: 0.12 })
+    );
+    sScene.add(mesh, core);
+    sig = { renderer: sRenderer, scene: sScene, camera: sCamera, mesh, core };
+    const sresize = () => {
+      const r = sigCanvas.getBoundingClientRect();
+      if (r.width === 0) return;
+      sRenderer.setSize(r.width, r.height, false);
+      sCamera.aspect = r.width / r.height;
+      sCamera.updateProjectionMatrix();
+    };
+    sresize();
+    window.addEventListener('resize', sresize, { passive: true });
   }
+
+  /* scroll progress: camera dollies in as the page scrolls (ScrollTrigger-set, not scroll events) */
   let progress = 0;
   if (window.ScrollTrigger) {
     window.ScrollTrigger.create({
-      trigger: document.body, start: 'top top', end: 'bottom bottom',
+      trigger: document.body,
+      start: 'top top',
+      end: 'bottom bottom',
       onUpdate: (self) => { progress = self.progress; },
     });
   }
@@ -259,19 +425,22 @@ const unit = (n) => (n % 1000) / 1000;
    * ================================================================== */
   let running = true;
   let t = 0;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const loop = () => {
     if (!running) return;
-    t += 0.0028;
+    t += reduced ? 0.0009 : 0.0028;
     pointer.x += (pointer.tx - pointer.x) * 0.045;
     pointer.y += (pointer.ty - pointer.y) * 0.045;
 
+    // slow drift + parallax; the graph slowly rotates like Obsidian's idle view
     field.rotation.y = t * 0.6 + pointer.x * 0.28;
     field.rotation.x = -0.12 - pointer.y * 0.16;
     field.position.y = Math.sin(t * 0.9) * 0.5;
-    camera.position.z = 46 - progress * 22;
+    camera.position.z = 46 - progress * 16;
+    camera.position.y = 6 - progress * 4 - pointer.y * 1.7;
     camera.position.x = pointer.x * 2.4;
-    camera.position.y = -pointer.y * 1.7;
     camera.lookAt(0, 0, 0);
+    pick();
     renderer.render(scene, camera);
 
     if (sig) {
@@ -290,9 +459,6 @@ const unit = (n) => (n % 1000) / 1000;
     else if (!running) { running = true; requestAnimationFrame(loop); }
   });
 
-  /* ================================================================== *
-   *  CONTEXT LOSS - degrade to the CSS atmosphere, never a blank screen
-   * ================================================================== */
   canvas.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
     running = false;

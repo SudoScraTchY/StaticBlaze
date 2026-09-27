@@ -149,6 +149,7 @@ foreach (var post in posts)
         ["CategoryTitle"] = categoryTitle,
         ["Related"] = related,
         ["SceneData"] = SceneJson(summaryBySlug.TryGetValue(post.Slug, out var s) ? s : null),
+        ["Comments"] = site.Comments,
         ["PostsJson"] = sharedPosts,
     }));
 }

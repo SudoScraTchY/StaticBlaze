@@ -194,16 +194,43 @@
   }
 
   /* ------------------------------------------------------------------ *
-   *  4. PAGE TRANSITION - an instrument wipe between documents
+   *  4. PAGE TRANSITION - a layered shutter, not a flat wipe
+   *  Outgoing: the document lifts, blurs and dims while three slats close
+   *  over it in sequence. Navigation happens while the screen is covered.
+   *  Incoming: the new document's main content rises in with a short
+   *  stagger, so every page opens with the same signature move.
+   *  Safety: a hard timer still navigates if the timeline is interrupted,
+   *  the veil clears on bfcache restores, and reduced motion never plays.
    * ------------------------------------------------------------------ */
   const veil = q('[data-veil]');
+  const main = q('#main') || q('main');
   if (veil) {
+    // three slats share one gradient; each gets its own transform origin
+    const slats = [];
+    for (let i = 0; i < 3; i++) {
+      const s = document.createElement('div');
+      s.className = 'veil-slat';
+      s.setAttribute('aria-hidden', 'true');
+      veil.appendChild(s);
+      slats.push(s);
+    }
+
     const play = (to) => {
-      gsap.set(veil, { display: 'block', transformOrigin: 'left center', scaleX: 0, opacity: 1 });
-      gsap.timeline()
-        .to(veil, { scaleX: 1, duration: 0.36, ease: 'power2.inOut' })
-        .add(() => { window.location.href = to; });
+      gsap.set(veil, { display: 'block', opacity: 1 });
+      gsap.set(slats, { scaleX: 0, transformOrigin: (i) => (i % 2 ? 'right center' : 'left center') });
+      const tl = gsap.timeline({ defaults: { ease: 'power3.inOut' } });
+      if (main) {
+        tl.to(main, { y: -26, opacity: 0.15, filter: 'blur(6px)', duration: 0.34 }, 0)
+          .to(slats, { scaleX: 1, duration: 0.42, stagger: 0.05 }, 0.08)
+          .add(() => { window.location.href = to; })
+          .to({}, { duration: 0.02 }); // hold one tick so the cover is fully painted
+      } else {
+        tl.to(slats, { scaleX: 1, duration: 0.42, stagger: 0.05 })
+          .add(() => { window.location.href = to; })
+          .to({}, { duration: 0.02 });
+      }
     };
+
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href]');
       if (!a) return;
@@ -212,16 +239,31 @@
       if (a.host !== window.location.host || href.startsWith('#') || href.startsWith('mailto:')) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
       e.preventDefault();
-      // hard safety: if the wipe stalls for any reason, navigate anyway
-      window.setTimeout(() => { window.location.href = a.href; }, 700);
+      // hard safety: if the shutter stalls for any reason, navigate anyway
+      window.setTimeout(() => { window.location.href = a.href; }, 900);
       play(a.href);
     });
-    // the veil must never survive a back/forward restore
-    window.addEventListener('pageshow', () => { gsap.set(veil, { display: 'none', scaleX: 0 }); });
-    gsap.set(veil, { display: 'none' });
-  }
 
-  /* ------------------------------------------------------------------ *
+    // the shutter must never survive a back/forward restore
+    const clear = () => {
+      gsap.set(veil, { display: 'none', opacity: 0 });
+      gsap.set(slats, { scaleX: 0 });
+      if (main) gsap.set(main, { y: 0, opacity: 1, filter: 'none' });
+    };
+    window.addEventListener('pageshow', clear);
+    clear();
+
+    /* incoming reveal: rise + settle once the new document paints */
+    const reveal = () => {
+      const targets = main ? [main, ...qa('[data-hero-stagger]', main).slice(0, 6)] : [];
+      if (!targets.length) return;
+      gsap.fromTo(targets,
+        { y: 22, opacity: 0, filter: 'blur(5px)' },
+        { y: 0, opacity: 1, filter: 'none', duration: 0.66, ease: 'expo.out', stagger: 0.055, clearProps: 'filter,will-change' });
+    };
+    if (document.readyState === 'complete') reveal();
+    else window.addEventListener('load', reveal, { once: true });
+  }  /* ------------------------------------------------------------------ *
    *  5. CUE THE 3D LAYER - only after first paint is safe
    * ------------------------------------------------------------------ */
   const boot = () => {

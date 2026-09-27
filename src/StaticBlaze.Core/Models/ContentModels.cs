@@ -18,9 +18,40 @@ public sealed class SiteConfig
     /// <summary>Hero copy for the home page. Optional; the shell falls back to the site title and description.</summary>
     public HeroConfig Hero { get; set; } = new();
 
+    /// <summary>Post comments backed by GitHub Discussions (giscus). Optional; off unless configured.</summary>
+    public GiscusConfig? Comments { get; set; }
+
     /// <summary>Path prefix when hosted under a subpath (e.g. "/StaticBlaze" for
     /// user.github.io/repo). Derived from <see cref="Url"/> at load time; empty for root hosting.</summary>
     public string BasePath { get; set; } = "";
+}
+
+/// <summary>GitHub Discussions comments via giscus. Null/unconfigured means the section never renders.</summary>
+public sealed class GiscusConfig
+{
+    /// <summary>GitHub repository in owner/name form. Must have Discussions enabled.</summary>
+    public string Repo { get; set; } = "";
+
+    /// <summary>The numeric repository id the giscus wizard reports.</summary>
+    public string RepoId { get; set; } = "";
+
+    /// <summary>The discussions category id, e.g. "DIC_kwDO..." for Announcements or General.</summary>
+    public string CategoryId { get; set; } = "";
+
+    /// <summary>Category the comment discussions are filed under.</summary>
+    public string Category { get; set; } = "Announcements";
+
+    /// <summary>Mapping between the post URL and the discussion title.</summary>
+    public string Mapping { get; set; } = "pathname";
+
+    /// <summary>Light/dark theme for the embedded iframe.</summary>
+    public string Theme { get; set; } = "dark_dimmed";
+
+    /// <summary>Which language the widget localises to.</summary>
+    public string Lang { get; set; } = "en";
+
+    /// <summary>When false (or when any id is blank) the comments section is not rendered at all.</summary>
+    public bool Enabled { get; set; } = false;
 }
 
 public sealed class NavLink

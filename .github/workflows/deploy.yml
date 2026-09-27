@@ -35,6 +35,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Check file casing
+        # Runs before Test on purpose. A file committed as foo.csproj while the solution references
+        # Foo.csproj builds on Windows and fails on the Linux runner with "project not found". On
+        # 18d5eb7 that surfaced as a bare Test failure with every later step skipped. This step names
+        # the real cause in one line instead.
+        run: node tools/check-casing.mjs
+
       - name: Test
         run: dotnet test
 

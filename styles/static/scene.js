@@ -59,7 +59,9 @@ function mulberry32(seed) {
  *  hubs act as soft attractors. ~120 iterations is plenty for <50 posts and
  *  costs nothing because it runs once at boot, not per frame.
  * ====================================================================== */
+let tagGroups;
 function buildGraph(posts, rand) {
+  tagGroups = new Map();
   const nodes = posts.map((p) => ({
     slug: p.slug,
     title: p.title,
@@ -76,7 +78,6 @@ function buildGraph(posts, rand) {
   }));
 
   const index = new Map(nodes.map((n) => [n.slug, n]));
-  const tagGroups = new Map();
   for (const n of nodes) {
     for (const t of n.tags.length ? n.tags : [n.category || 'misc']) {
       if (!tagGroups.has(t)) tagGroups.set(t, []);
@@ -291,7 +292,6 @@ function buildGraph(posts, rand) {
   };
   const labelGroup = new THREE.Group();
   for (const tag of hubs.slice(0, 12)) {
-    const group = tagGroups && null; // (kept for readability)
     const { tex, aspect } = makeLabel(tag);
     const m = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85, depthWrite: false });
     const sp = new THREE.Sprite(m);

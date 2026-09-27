@@ -549,6 +549,13 @@ artifact. Two publishers, and the legacy one wins whenever it finishes last.
 **GitHub Actions**. Until that changes, every push re-triggers the legacy build and the blog will keep
 being replaced by a render of the README.
 
+**Now guarded.** The workflow ends with a `Verify the published site` step that fetches the live URL,
+asserts the Deep Field shell marker is present, and asserts `/posts/ /contact/ /archive/ /tags/` all
+return 200. Its predicate was tested two-sided: against the live site it fails (root 200, marker
+absent, every route 404) and against a locally served artifact it passes. Until the Pages Source is
+corrected that step fails the run with the remediation printed in the log, which is strictly better
+than a green run publishing the wrong content.
+
 **What I got wrong.** I had this hypothesis earlier and wrote it down — "a second, successful run named
 `pages build and deployment` exists alongside my failed deploy run; that pattern is characteristic of
 Pages still being set to Deploy from a branch" — then I found the casing defect, fixed it, watched the

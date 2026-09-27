@@ -107,3 +107,39 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify the published site
+        # A green pipeline can still publish the wrong content. If the repository Pages Source is
+        # "Deploy from a branch" rather than "GitHub Actions", GitHub's legacy Jekyll build also
+        # publishes on every push and can overwrite this artifact - which is what happened here:
+        # the artifact was briefly live, then a Jekyll render of README.md replaced it.
+        # Without this step that is silent. With it, it is one clear line and a failed run.
+        env:
+          SITE_URL: https://sudoscratchy.github.io/StaticBlaze
+        run: |
+          ok=0
+          for attempt in 1 2 3 4 5 6; do
+            sleep 15
+            html="$(curl -fsS "$SITE_URL/" || true)"
+            if printf '%s' "$html" | grep -q 'class="cockpit"'; then
+              echo "attempt $attempt: the built artifact is live"
+              ok=1
+              break
+            fi
+            echo "attempt $attempt: something else is being served"
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo ""
+            echo "FAILED: the published site is not this build."
+            echo "Most likely cause: Settings -> Pages -> Build and deployment -> Source is set"
+            echo "to 'Deploy from a branch'. GitHub's legacy Jekyll build then publishes on every"
+            echo "push and races this workflow. Set Source to 'GitHub Actions' and re-run."
+            exit 1
+          fi
+          for path in posts contact archive tags; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' "$SITE_URL/$path/")"
+            echo "  /$path/ -> $code"
+            if [ "$code" != "200" ]; then
+            echo "FAILED: /$path/ did not return 200 from the published site"; exit 1
+            fi
+          done
+          echo "published site verified: shell, index, contact, archive, tags"

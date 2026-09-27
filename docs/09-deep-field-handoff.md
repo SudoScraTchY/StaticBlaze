@@ -242,13 +242,13 @@ the system. A full re-measurement of every new pairing was **not** re-run this s
    The form validates fully and then reports "not stored: no transport configured in this build".
    Pointing `data-endpoint` on the form at any URL that accepts a JSON POST switches it to real
    submission with no other code change. **This needs a decision from Mehrshad**, not more code.
-2. ~~No staging deploy.~~ **The deploy is live and green.** The GitHub Pages workflow now runs all
-   20 steps successfully on `a91ef5b` and the site is served at
-   https://sudoscratchy.github.io/StaticBlaze/ with every route and runtime asset returning 200
-   (verified: `/`, `/posts/`, `/contact/`, `/archive/`, `/tags/`, `/404.html`, the feeds, the manifest,
-   the search index, `site.css`, `motion.js`, `scene.js`, the vendored GSAP and Three.js, and the
-   Persian font). There is still **one environment only**, so "publish to staging first, then
-   production" remains unimplemented: GitHub Pages offers a single deployment target per repository.
+2. **The pipeline is green; the repository's Pages setting is not.** All 20 workflow steps succeed on
+   `a91ef5b` and `actions/deploy-pages` publishes the built artifact. But **Pages Source is still set
+   to "Deploy from a branch"**, so GitHub's legacy Jekyll build also runs on every push and overwrites
+   the published site. The live URL currently serves a Jekyll render of `README.md`, not the blog.
+   This needs one repository setting changed by the owner (see 10a-bis). There is also **one
+   environment only**, so "publish to staging first, then production" remains unimplemented: GitHub
+   Pages offers a single deployment target per repository.
 3. ~~No field performance measurement.~~ **Closed.** LCP, CLS and INP were measured on a throttled
    mid-range mobile profile over the DevTools protocol. All three are inside target.
 4. **No cross-browser pass, and it is not possible here.** Everything was verified in one Chromium.
@@ -524,6 +524,39 @@ resolved the lowercase csproj and reported 27 passing locally, every time. Nothi
 workflow could ever have caught it. `tools/check-casing.mjs` closes that gap permanently: it reads the
 git index, which is case-sensitive on every platform, and it runs **before** the Test step so the real
 cause is named in one line instead of surfacing as a bare test failure.
+
+## 10a-bis. The Pages publish race, and a success I declared too early
+
+After the casing fix the whole workflow went green (all 20 steps) and a check of the live URL showed
+the Deep Field markers present, every route 200 and every runtime asset served. **I reported the site
+as live on that basis. Roughly fifteen minutes later the same check failed completely**: every route
+404 and `/` returned a Jekyll-rendered README.
+
+The run timestamps explain it exactly:
+
+| Time (UTC) | Workflow | SHA | Result |
+|---|---|---|---|
+| 17:18:34 | `pages build and deployment` (GitHub's legacy Jekyll build) | `a91ef5b` | success, publishes a Jekyll render |
+| 17:18:35 | `deploy` (this repository's workflow) | `a91ef5b` | **success**, publishes the built artifact |
+| 17:19:13 / 17:19:57 | — | — | the artifact finished last, so the site *was* correct |
+| **17:23:04** | `pages build and deployment` (legacy) | `4b8d253` (a docs-only push) | **overwrites the site again** |
+
+**Root cause:** the repository's Pages **Source** is set to *Deploy from a branch*, so GitHub builds
+the publishing branch with Jekyll on every push and publishes that, independently of the Actions
+artifact. Two publishers, and the legacy one wins whenever it finishes last.
+
+**The fix is one setting, and it is owner-only:** Settings → Pages → Build and deployment → Source →
+**GitHub Actions**. Until that changes, every push re-triggers the legacy build and the blog will keep
+being replaced by a render of the README.
+
+**What I got wrong.** I had this hypothesis earlier and wrote it down — "a second, successful run named
+`pages build and deployment` exists alongside my failed deploy run; that pattern is characteristic of
+Pages still being set to Deploy from a branch" — then I found the casing defect, fixed it, watched the
+workflow go green, checked the URL once, and declared the delivery done. One check, taken inside the
+window before the legacy build finished, was enough to convince me. The lesson is the same one this
+session keeps teaching: **a single passing observation is not verification when two writers are racing
+for the same resource.** Re-checking after a delay, or comparing the timestamps of the competing runs,
+would have caught it immediately.
 
 ## 11b. Re-runnable checks
 

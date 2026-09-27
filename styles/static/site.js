@@ -344,15 +344,13 @@ const $$ = (s, c = document) => [...c.querySelectorAll(s)];
       gantt: { useMaxWidth: true },
     });
 
-    let ok = 0;
     try {
-      // runPromise renders every block in one pass; the returned nodes replace our <pre> elements
-      const { svg } = await mermaid.run({
-        nodes: blocks,
-        suppressErrors: false,
-        postRenderCallback: () => {},
-      });
-      ok = svg ? svg.length : blocks.length;
+      // v11 API: mermaid.run resolves to void - it rewrites the pre nodes in place.
+      // Destructuring the result throws (the live check caught exactly that; the failure
+      // path did its job). Await it, then verify the DOM gained SVGs before declaring success.
+      await mermaid.run({ nodes: blocks, suppressErrors: false });
+      const rendered = blocks.filter((el) => el.querySelector('svg'));
+      if (!rendered.length) throw new Error('no diagram produced an svg');
       blocks.forEach((el) => {
         el.classList.add('mermaid-done');
         el.removeAttribute('data-mermaid-error');

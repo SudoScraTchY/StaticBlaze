@@ -459,3 +459,81 @@ html[data-anim="on"] [data-reveal].is-in { opacity: 1; }
   .stage::after { display: none; }
   .rail > i { transition: none; }
 }
+
+/* -------------------------------------------------------------------- *
+ *  MERMAID - diagrams rendered client-side from <pre class="mermaid">
+ *  The pre processor keeps the source in the HTML, so before this script
+ *  runs the reader sees the diagram source (honest), and after it runs the
+ *  SVG replaces it. The failure path keeps the source AND says why.
+ * -------------------------------------------------------------------- */
+.prose pre.mermaid {
+  display: grid;
+  place-items: center;
+  min-height: 4rem;
+  padding: 0.75rem 0.5rem;
+  overflow-x: auto;
+  cursor: default;
+}
+.prose pre.mermaid svg { max-width: 100%; height: auto; }
+.prose pre.mermaid[data-processed="true"] { overflow-x: auto; }
+.prose .mermaid-note {
+  font-family: var(--family-mono);
+  font-size: var(--fs-2xs);
+  color: var(--zafaran);
+  text-align: center;
+  margin-block-start: -0.4rem;
+}
+.prose pre.mermaid.mermaid-failed {
+  text-align: start;
+  background: var(--ground-2);
+  border: 1px solid var(--zafaran);
+  padding: 1rem 1.15rem;
+  font-family: var(--family-mono);
+  font-size: 0.8rem;
+  white-space: pre;
+}
+/* -------------------------------------------------------------------- *
+ *  COMMENTS (giscus) - the iframe is styled by GitHub; we frame it.
+ * -------------------------------------------------------------------- */
+.comments {
+  margin-block-start: 3rem;
+  padding-block-start: 1.5rem;
+  border-top: 1px solid var(--edge);
+}
+.comments-frame { max-width: 100%; }
+.comments-frame iframe { width: 100%; border: 0; color-scheme: dark; }
+/* -------------------------------------------------------------------- *
+ *  GRAPH - hover label for the 3D knowledge graph (Obsidian-style)
+ * -------------------------------------------------------------------- */
+.graph-tip {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  font-family: var(--family-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: rgb(6 7 13 / 0.82);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-1);
+  padding: 0.3rem 0.55rem;
+  transform: translate(14px, 14px);
+  max-width: 22rem;
+}
+.graph-tip:empty { display: none; }
+/* -------------------------------------------------------------------- *
+ *  PAGE TRANSITION - three slats that close over the document
+ *  Each slat is a third of the screen with the same gradient, offset so
+ *  together they read as one shutter. motion.js drives scaleX per slat.
+ * -------------------------------------------------------------------- */
+.veil-slat {
+  position: absolute;
+  inset-block: 0;
+  width: 34.5%;
+  background: linear-gradient(100deg, var(--lajvard) 0%, var(--ground) 42%, var(--ground) 58%, var(--accent) 100%);
+  transform: scaleX(0);
+  will-change: transform;
+}
+.veil-slat:nth-child(1) { inset-inline-start: 0; }
+.veil-slat:nth-child(2) { inset-inline-start: 32.75%; }
+.veil-slat:nth-child(3) { inset-inline-start: 65.5%; background: linear-gradient(260deg, var(--lajvard) 0%, var(--ground) 42%, var(--ground) 58%, var(--accent) 100%); }

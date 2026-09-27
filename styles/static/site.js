@@ -269,3 +269,145 @@ const $$ = (s, c = document) => [...c.querySelectorAll(s)];
     }
   });
 })();
+
+
+/* ==================================================================== *
+ *  MERMAID DIAGRAMS
+ *  The markdown pipeline rewrites ```mermaid fences into <pre class="mermaid">
+ *  so the source survives generation even if this script never runs. Here we
+ *  upgrade those blocks in place: library loaded only when a diagram exists,
+ *  theme colours read from the same CSS tokens the page uses, and an honest
+ *  failure path that leaves the source visible instead of a broken box.
+ * ==================================================================== */
+(() => {
+  const blocks = $$('pre.mermaid');
+  if (!blocks.length) return;
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css = getComputedStyle(document.documentElement);
+  const token = (name, fallback) => (css.getPropertyValue(name) || '').trim() || fallback;
+
+  const fail = (el, message) => {
+    // keep the raw source readable, say what happened, never a silent empty box
+    el.classList.add('mermaid-failed');
+    el.setAttribute('data-mermaid-error', message);
+    const note = document.createElement('p');
+    note.className = 'mermaid-note';
+    note.textContent = `diagram could not be rendered (${message}); showing the source`;
+    el.insertAdjacentElement('afterend', note);
+  };
+
+  const boot = async () => {
+    // the vendored UMD build defines window.mermaid; loading it costs ~2.7 MB, so only pages
+    // that actually contain a diagram pay for it. Static sites fetch from the same origin.
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `${document.documentElement.getAttribute('data-base') || ''}/assets/vendor/mermaid.min.js`;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('library failed to load'));
+        document.head.appendChild(s);
+      });
+    } catch (err) {
+      blocks.forEach((el) => fail(el, err.message));
+      return;
+    }
+
+    const mermaid = window.mermaid;
+    if (!mermaid || typeof mermaid.initialize !== 'function') {
+      blocks.forEach((el) => fail(el, 'mermaid global missing'));
+      return;
+    }
+
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      fontFamily: token('--family-sans', 'system-ui, sans-serif'),
+      themeVariables: {
+        darkMode: true,
+        background: token('--ground', '#06070d'),
+        primaryColor: token('--lajvard-soft', '#1b2150'),
+        primaryTextColor: token('--ink', '#eef0ff'),
+        primaryBorderColor: token('--accent', '#57c5c6'),
+        lineColor: token('--accent', '#57c5c6'),
+        secondaryColor: token('--panel', '#0c101d'),
+        tertiaryColor: token('--panel', '#0c101d'),
+        noteBkgColor: token('--panel', '#0c101d'),
+        noteTextColor: token('--ink', '#eef0ff'),
+        noteBorderColor: token('--zafaran', '#f5a524'),
+        fontFamily: token('--family-sans', 'system-ui, sans-serif'),
+        fontSize: '15px',
+      },
+      flowchart: { curve: 'basis', useMaxWidth: true },
+      sequence: { useMaxWidth: true },
+      gantt: { useMaxWidth: true },
+    });
+
+    let ok = 0;
+    try {
+      // runPromise renders every block in one pass; the returned nodes replace our <pre> elements
+      const { svg } = await mermaid.run({
+        nodes: blocks,
+        suppressErrors: false,
+        postRenderCallback: () => {},
+      });
+      ok = svg ? svg.length : blocks.length;
+      blocks.forEach((el) => {
+        el.classList.add('mermaid-done');
+        el.removeAttribute('data-mermaid-error');
+      });
+    } catch (err) {
+      // mermaid.run removes/leaves nodes inconsistently on error; be explicit instead
+      blocks.forEach((el) => {
+        if (!el.classList.contains('mermaid-done')) fail(el, (err && err.message) || 'render error');
+      });
+    }
+  };
+
+  // diagrams are below the fold on most pages; render after first paint, never blocking LCP
+  if ('requestIdleCallback' in window) window.requestIdleCallback(boot, { timeout: 1800 });
+  else window.setTimeout(boot, 700);
+})();
+
+/* ==================================================================== *
+ *  GISCUS COMMENTS
+ *  Mounts the giscus iframe only when the section is configured with a
+ *  repository, repo id and category id. Unconfigured = the honest note
+ *  that the generator already rendered stays in place.
+ * ==================================================================== */
+(() => {
+  const section = $('[data-comments]');
+  if (!section) return;
+  const frame = $('[data-comments-frame]', section);
+  if (!frame) return;
+
+  const repo = section.getAttribute('data-repo') || '';
+  const repoId = section.getAttribute('data-repo-id') || '';
+  const categoryId = section.getAttribute('data-category-id') || '';
+  if (!repo || !repoId || !categoryId) return; // unconfigured: keep the note
+
+  const theme = section.getAttribute('data-theme') || 'dark_dimmed';
+  const lang = section.getAttribute('data-lang') || 'en';
+  const mapping = section.getAttribute('data-mapping') || 'pathname';
+  const category = section.getAttribute('data-category') || 'Announcements';
+
+  const s = document.createElement('script');
+  s.src = 'https://giscus.app/client.js';
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  s.setAttribute('data-repo', repo);
+  s.setAttribute('data-repo-id', repoId);
+  s.setAttribute('data-category', category);
+  s.setAttribute('data-category-id', categoryId);
+  s.setAttribute('data-mapping', mapping);
+  s.setAttribute('data-strict', '1');
+  s.setAttribute('data-reactions-enabled', '1');
+  s.setAttribute('data-emit-metadata', '0');
+  s.setAttribute('data-input-position', 'top');
+  s.setAttribute('data-theme', theme);
+  s.setAttribute('data-lang', lang);
+  s.setAttribute('data-loading', 'lazy');
+  s.crossOrigin = 'anonymous';
+  frame.replaceChildren(s);
+})();

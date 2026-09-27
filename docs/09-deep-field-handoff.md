@@ -242,11 +242,13 @@ the system. A full re-measurement of every new pairing was **not** re-run this s
    The form validates fully and then reports "not stored: no transport configured in this build".
    Pointing `data-endpoint` on the form at any URL that accepts a JSON POST switches it to real
    submission with no other code change. **This needs a decision from Mehrshad**, not more code.
-2. **No staging deploy.** There is no host configured for this site in this session and DNS changes
-   are out of scope without confirmation. **The rollback mechanism itself has now been rehearsed**
-   (see section 11): the previous revision was materialised, built and generated successfully, and the
-   documented distinguisher discriminates cleanly. What remains unrehearsed is the deploy half, because
-   there is nothing to deploy to.
+2. ~~No staging deploy.~~ **The deploy is live and green.** The GitHub Pages workflow now runs all
+   20 steps successfully on `a91ef5b` and the site is served at
+   https://sudoscratchy.github.io/StaticBlaze/ with every route and runtime asset returning 200
+   (verified: `/`, `/posts/`, `/contact/`, `/archive/`, `/tags/`, `/404.html`, the feeds, the manifest,
+   the search index, `site.css`, `motion.js`, `scene.js`, the vendored GSAP and Three.js, and the
+   Persian font). There is still **one environment only**, so "publish to staging first, then
+   production" remains unimplemented: GitHub Pages offers a single deployment target per repository.
 3. ~~No field performance measurement.~~ **Closed.** LCP, CLS and INP were measured on a throttled
    mid-range mobile profile over the DevTools protocol. All three are inside target.
 4. **No cross-browser pass, and it is not possible here.** Everything was verified in one Chromium.
@@ -501,6 +503,28 @@ Pointed at a dead port, the form behaved correctly rather than silently succeedi
 | form fields | **preserved**, so the visitor can retry without retyping |
 | store | unchanged — nothing was written |
 
+## 11a-bis. Why the first Pages deploy failed, and what it taught
+
+The workflow failed on `18d5eb7`, and the remote's own step record (read from the public API) showed
+the failure was at **Test** with every later step skipped. Two separate defects were stacked, and the
+first diagnosis I reached was **wrong**:
+
+| Defect | Evidence | Fix |
+|---|---|---|
+| The workflow called `node tools/audit-site.mjs` and `node tools/check-crossengine.mjs`, but **`.gitignore` rule `/tools/*` excluded those scripts from the repository** (only `serve.mjs` and `get-fonts.ps1` had negations) | `git ls-tree 18d5eb7 tools/` listed only `get-fonts.ps1`, `node-tools`, `serve.mjs` | negations for `tools/*.mjs` and `tools/*.ps1`, plus the scripts committed |
+| **The generator test project was committed with lowercase filenames** — `staticblaze.site.tests.csproj` and `goldenfiletests.cs` — while `StaticBlaze.slnx` references `StaticBlaze.Site.Tests.csproj` | `git ls-tree 18d5eb7 tests/` showed the lowercase names; the solution reference had no exact-case match in the index | renamed through an intermediate name, since git cannot rename case-only on a case-insensitive filesystem |
+
+**The lesson is about my own diagnosis.** I found the first defect, confirmed it, and stopped, treating
+it as the cause of the failed run. It was a real defect but it was *not* the cause: the run died at
+Test, long before the gate step. Only after the API told me *which step* failed did I look in the right
+place. Reading "which step failed" before "what looks broken" would have saved a full cycle.
+
+**And the second defect is invisible on this machine.** Windows is case-insensitive, so `dotnet test`
+resolved the lowercase csproj and reported 27 passing locally, every time. Nothing in the local
+workflow could ever have caught it. `tools/check-casing.mjs` closes that gap permanently: it reads the
+git index, which is case-sensitive on every platform, and it runs **before** the Test step so the real
+cause is named in one line instead of surfacing as a bare test failure.
+
 ## 11b. Re-runnable checks
 
 Three scripts live in `tools/` so none of the verification above has to be repeated by hand:
@@ -511,6 +535,7 @@ Three scripts live in `tools/` so none of the verification above has to be repea
 | `tools/check-crossengine.mjs` | strips every `@supports` block and asserts each critical surface still resolves to an opaque background | `node tools/check-crossengine.mjs dist/assets/site.css` |
 | `tools/submissions.mjs` | the submission store: `add`, `list`, `export`, `set-status` | `node tools/submissions.mjs list` |
 | `tools/parity.mjs` | route parity against the previous revision, internal link integrity, sitemap reachability | `node tools/parity.mjs <oldDist> dist` |
+| `tools/check-casing.mjs` | every solution reference resolves with exact case in the git index, and no source file starts lowercase. Runs before Test in CI | `node tools/check-casing.mjs .` |
 
 All exit non-zero on failure. **Two of them now run in CI** as a `Quality gates` step placed after
 artifact assembly and before `configure-pages`, so a stale route, a broken internal link, a duplicate

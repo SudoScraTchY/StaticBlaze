@@ -52,4 +52,4 @@ Code works, with highlighting added later by a small script so the HTML you are 
 
 Because static does not have to mean crude. Jekyll proved the model fifteen years ago; this is the same model with C# doing the carving. Everything on this page, from the [archive](/archive/) to the tags below, was decided at build time.
 
-More soon.
+More soon. And the diagrams you saw at the top are not a plugin - the whole [mermaid capability set](/StaticBlaze/posts/mermaid-capability-check/) renders from plain fences, and the pipeline that [deploys this site](/StaticBlaze/posts/deployed-from-a-workflow/) is the same one that built this page.

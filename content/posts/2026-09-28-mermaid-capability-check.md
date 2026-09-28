@@ -229,6 +229,8 @@ quadrantChart
     Custom domain: [0.4, 0.2]
 ```
 
+The [markdown feature tour](/StaticBlaze/posts/markdown-feature-tour/) shows the same fences rendering as diagrams, and the [Persian palette](/StaticBlaze/posts/persian-palette-engineers-blog/) post explains the tokens this page colours them with.
+
 ## What the pipeline rejects
 
 The generator is strict on purpose. An undeclared tag, a duplicate canonical, or an empty diagram all fail the build with a named cause. That strictness is what makes a live test post like the one that preceded this article meaningful: if it published, it passed every gate.

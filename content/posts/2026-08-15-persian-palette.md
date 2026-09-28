@@ -32,4 +32,4 @@ Gradients are not banned here; lazy gradients are. Lajvard flowing into firouzeh
 
 The typography is IBM Plex, a typeface family drawn for engineering documentation. Metadata, dates, read times, tags: all in Plex Mono, lowercase, set like a title block on a technical drawing. Hairline borders do the work that drop shadows do elsewhere. Sections are numbered `01`, `02`, `03` the way a drawing sheet numbers its views.
 
-That is the whole system: three inks, one paper, hairlines, and monospace discipline. :smile:
+That is the whole system: three inks, one paper, hairlines, and monospace discipline. It rides on the same generator described in [the first post](/StaticBlaze/posts/hello-staticblaze/). :smile:

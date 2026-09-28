@@ -33,4 +33,4 @@ The workflow declares `permissions: contents: read, pages: write, id-token: writ
 
 Until today the repository's Pages source was "Deploy from a branch", which meant GitHub's legacy Jekyll builder also published on every push and raced this workflow for the same URL. The source now reads **GitHub Actions**, so this workflow is the only publisher.
 
-That is the whole story. This post is the receipt.
+This is the same pipeline that built [the first post](/StaticBlaze/posts/hello-staticblaze/), and the one that renders the [mermaid diagrams](/StaticBlaze/posts/mermaid-capability-check/) elsewhere on this site.

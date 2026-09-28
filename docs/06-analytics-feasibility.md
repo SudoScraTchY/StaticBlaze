@@ -240,7 +240,7 @@ writes. Nothing in this schema describes a person.
 
 **Recommended first implementation: Approach A metrics M1–M5 and M8, plus the M5/M7 hard gates.**
 That is roughly one day of work, needs no approval of any kind, changes no public route, and closes
-the fourth of the six "definition of done" items in `docs/02-task-assessment.md` at the same time as
+the analytics item from the original task scope at the same time as
 it delivers M11 (orphaned routes), which is the automated form of finding F7.
 
 **One precise question for the user, if Approach B is ever wanted:** *what reader-facing decision

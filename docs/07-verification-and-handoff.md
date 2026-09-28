@@ -47,7 +47,7 @@ remains **unverified at runtime**, exactly as it was before this work.
 ## 3. The two previously orphaned routes are now linked
 
 Both `/tags/` and `/categories/` were generated and sitemapped but unreachable from the UI
-(finding F7 in `docs/02-task-assessment.md`). After adding them to `content/site.json`'s `nav[]`,
+(finding F7 from the original scan). After adding them to `content/site.json`'s `nav[]`,
 grep of the generated `dist/index.html` shows them in the header nav and again in the footer:
 
 ```

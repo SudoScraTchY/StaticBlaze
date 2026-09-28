@@ -46,7 +46,7 @@ flowchart LR
 | `tools/node-tools` | pinned `tailwindcss` + `@tailwindcss/cli` for local and CI builds |
 | `tools/*.mjs` | build-time gates: site audit, cross-engine CSS check, casing check, local server |
 | `tests/` | `StaticBlaze.Core.Tests` (unit) and `StaticBlaze.Site.Tests` (golden-file HTML contract) |
-| `docs/` | scan, assessment, backlog, IA, design system, analytics, verification, ledger, handoff |
+| `docs/` | documentation map, scan, IA, design system, analytics, verification, handoff, change guides |
 
 ---
 
@@ -311,15 +311,15 @@ Full detail: `docs/09-deep-field-handoff.md`.
 
 | Document | What it covers |
 |---|---|
+| `docs/00-documentation-map.md` | the docs tree and the cleanup ledger (what was kept, removed, added) |
 | `docs/01-repository-scan.md` | structure, entry points, content model, build pipeline, dependencies |
-| `docs/02-task-assessment.md` | 15 concrete findings with file paths |
-| `docs/03-next-step-ideas.md` | 15 ranked next steps with impact/effort/risk |
-| `docs/04-information-architecture.md` | sitemap, page inventory, navigation, user flows |
+| `docs/04-information-architecture.md` | sitemap, page inventory, navigation model, user flows |
 | `docs/05-design-system.md` | tokens, contrast table, type scale, motion, Tailwind mapping |
 | `docs/06-analytics-feasibility.md` | metrics, privacy, schema, go/no-go |
 | `docs/07-verification-and-handoff.md` | commands with exit status, route and token tables, defect post-mortem |
-| `docs/08-task-ledger.md` | every task: status, priority, dependency, evidence pointer |
 | `docs/09-deep-field-handoff.md` | the redesign handoff: decisions, motion spec, failure matrix |
+| `docs/10-design-changes.md` | how to change the design, manually and via an agent |
+| `docs/11-agent-ui-context.md` | per-page feature inventory for an AI agent (design-direction placeholder) |
 
 ## Status
 
@@ -333,4 +333,4 @@ Full detail: `docs/09-deep-field-handoff.md`.
 - [x] Deployment: Actions → OIDC → Pages, no PAT, post-deploy live verification in the workflow
 - [x] Admin: encrypted vault, SHA-aware GitHub client, Toast UI editor, SkiaSharp media pipeline
 - [x] Tests: 27 passing - Core unit tests plus golden-file HTML tests that pin the template markup contract
-- [ ] Real analytics, custom domain - tracked in `docs/08-task-ledger.md`
+- [ ] Real analytics, custom domain - see `docs/06-analytics-feasibility.md` and `docs/10-design-changes.md`

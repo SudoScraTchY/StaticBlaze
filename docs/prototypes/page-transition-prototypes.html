@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page-transition prototypes · StaticBlaze</title>
+<style>
+  :root { --paper:#0a0b12; --ink:#e9ecf5; --dim:#98a0bd; --edge:#1c2030; --accent:#57c5c6; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 26px; font-weight: 600; letter-spacing:-0.01em; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--dim); margin: 0 0 32px; font-size: 14px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+
+  .demo { border:1px solid var(--edge); border-radius:8px; overflow:hidden; background:#0d0f18; }
+  .demo-head { padding: 12px 16px; border-bottom:1px solid var(--edge); font-size:13px; }
+  .demo-head b { color: var(--accent); }
+  .demo-head .tag { float:right; color:var(--dim); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .stage { position:relative; height: 340px; overflow:hidden; background:#0d0f18; }
+  .page { position:absolute; inset:0; padding:28px; }
+  .page h2 { font-size:20px; margin:0 0 10px; }
+  .page p { color: var(--dim); max-width: 52ch; }
+  .card { border:1px solid var(--edge); border-radius:6px; padding:14px; margin-top:14px; }
+  .cta { display:inline-block; margin-top:18px; padding:8px 18px; border:1px solid var(--accent); color:var(--accent); border-radius:5px; cursor:pointer; background:transparent; font:inherit; }
+
+  /* shared shell for both approaches: header + background stay as the "site chrome" */
+  .chrome { position:absolute; inset:0; pointer-events:none; }
+  .chrome .bar { position:absolute; top:0; left:0; right:0; height:44px; border-bottom:1px solid var(--edge); background:#0d0f18cc; }
+  .chrome .dot { position:absolute; top:18px; left:20px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+  .chrome .bg { position:absolute; top:44px; left:0; right:0; bottom:0;
+    background: radial-gradient(1200px 600px at 70% 20%, #1a2142 0%, transparent 60%), #0a0b12; }
+
+  /* --- Approach A: full-window wipe --- */
+  .a .view { position:absolute; top:44px; left:0; right:0; bottom:0; }
+  .a .view article { height:100%; padding:26px; }
+
+  /* --- Approach B: partial blur (content refocus) --- */
+  .b .view { position:absolute; top:44px; left:0; right:0; bottom:0; }
+  .b .view article { height:100%; padding:26px; }
+  .b .progress { position:absolute; top:42px; left:0; height:2px; width:100%; background:var(--accent); transform:scaleX(0); transform-origin:left; }
+
+  .note { margin-top:12px; font-size:12px; color:var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Page-transition prototypes <span>·</span> StaticBlaze</h1>
+  <p class="sub">Two approaches, built side by side as the comparison record. The rejected one stays here so the decision is reviewable. Chrome/Edge/Firefox; the JS is vanilla, no dependencies.</p>
+
+  <div class="grid">
+
+    <!-- ===================== Approach A: full-window ===================== -->
+    <section class="demo a">
+      <div class="demo-head"><b>Approach A — full-window wipe</b><span class="tag">rejected</span></div>
+      <div class="stage">
+        <div class="chrome"><div class="bar"></div><div class="dot"></div><div class="bg"></div></div>
+        <div class="view" id="a-view"><article><h2>Page one</h2><p>The whole window — chrome included — wipes away and the next document wipes in. Strong, but it breaks the persistent 3D background and header, so every navigation resets the "instrument".</p><button class="cta" id="a-go">go to page two</button></article></div>
+      </div>
+      <div class="note">Full coverage: the header and background are part of the wipe. Continuity is sacrificed for impact.</div>
+    </section>
+
+    <!-- ===================== Approach B: partial blur ===================== -->
+    <section class="demo b">
+      <div class="demo-head"><b>Approach B — partial blur (refocus)</b><span class="tag">selected</span></div>
+      <div class="stage">
+        <div class="chrome"><div class="bar"></div><div class="dot"></div><div class="bg"></div></div>
+        <div class="progress" id="b-progress"></div>
+        <div class="view" id="b-view"><article><h2>Page one</h2><p>Only the content refocuses: it blurs, shrinks and fades out, then the next page resolves in crisp. The header and the 3D background never move, so the site reads as one continuous instrument.</p><button class="cta" id="b-go">go to page two</button></article></div>
+      </div>
+      <div class="note">Partial coverage: chrome stays put, content does a depth "focus pull". Continuity is the point.</div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  // Approach A: full-window wipe (clip-path sweep left -> right, then reveal)
+  const aStage = document.querySelector('.a .stage');
+  const aView = document.getElementById('a-view');
+  let aOnTwo = false;
+  const aPages = [
+    { h: 'Page one', p: 'The whole window wipes away and the next document wipes in.' },
+    { h: 'Page two', p: 'You arrived. The previous page is gone — chrome, background and all.' },
+  ];
+  document.getElementById('a-go').addEventListener('click', () => {
+    aOnTwo = !aOnTwo;
+    const next = aOnTwo ? aPages[1] : aPages[0];
+    aStage.style.transition = 'clip-path .45s cubic-bezier(.7,0,.2,1)';
+    aStage.style.clipPath = 'inset(0 100% 0 0)';
+    aStage.style.opacity = '.4';
+    setTimeout(() => {
+      aView.innerHTML = `<article><h2>${next.h}</h2><p>${next.p}</p><button class="cta" id="a-go">go to ${aOnTwo ? 'page one' : 'page two'}</button></article>`;
+      document.getElementById('a-go').addEventListener('click', arguments.callee);
+      aStage.style.clipPath = 'inset(0 0 0 0)';
+      aStage.style.opacity = '1';
+    }, 460);
+  });
+
+  // Approach B: partial blur refocus + accent progress sweep
+  const bView = document.getElementById('b-view');
+  const bProgress = document.getElementById('b-progress');
+  let bOnTwo = false;
+  const bPages = [
+    { h: 'Page one', p: 'Only the content refocuses: blur, shrink, fade, then the next page resolves crisp.' },
+    { h: 'Page two', p: 'You arrived. The header and background never moved — the site reads as one instrument.' },
+  ];
+  function bNav() {
+    bOnTwo = !bOnTwo;
+    const next = bOnTwo ? bPages[1] : bPages[0];
+    const art = bView.querySelector('article');
+    bProgress.style.transition = 'transform .32s cubic-bezier(.7,0,.2,1)';
+    bProgress.style.transform = 'scaleX(1)';
+    art.style.transition = 'transform .28s cubic-bezier(.55,0,.55,.2), opacity .28s ease, filter .28s ease';
+    art.style.transform = 'scale(.985) translateY(-6px)';
+    art.style.filter = 'blur(10px)';
+    art.style.opacity = '.15';
+    setTimeout(() => {
+      bView.innerHTML = `<article><h2>${next.h}</h2><p>${next.p}</p><button class="cta" id="b-go">go to ${bOnTwo ? 'page one' : 'page two'}</button></article>`;
+      document.getElementById('b-go').addEventListener('click', bNav);
+      bProgress.style.transform = 'scaleX(0)';
+      const a2 = bView.querySelector('article');
+      a2.style.opacity = '0';
+      a2.style.transform = 'scale(1.015)';
+      a2.style.filter = 'blur(6px)';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        a2.style.transition = 'transform .5s cubic-bezier(.16,1,.3,1), opacity .5s ease, filter .5s ease';
+        a2.style.opacity = '1';
+        a2.style.transform = 'scale(1)';
+        a2.style.filter = 'blur(0)';
+      }));
+    }, 320);
+  }
+  document.getElementById('b-go').addEventListener('click', bNav);
+</script>
+</body>
+</html>

@@ -249,12 +249,13 @@ await WritePageAsync("archive/index.html", Render<ArchivePage>(new Dictionary<st
 
 await WritePageAsync("contact/index.html", Render<ContactPage>(new Dictionary<string, object?>
 {
-    ["Site"] = site, ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
+    ["Site"] = site,
+        ["Contact"] = site.Contact, ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
 }));
 
 await WritePageAsync("404.html", Render<NotFoundPage>(new Dictionary<string, object?>
 {
-    ["Site"] = site, ["SceneData"] = sharedScene, ["PostsJson"] = sharedPosts,
+    ["Site"] = site,
 }));
 
 // ----- machine artifacts -----

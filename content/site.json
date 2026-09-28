@@ -15,6 +15,9 @@
     ],
     "sub": "Notes on .NET, Blazor, static sites, and the tools I keep rebuilding. Every post here is a folder of markdown that a console app turns into the page you are reading."
   },
+  "contact": {
+    "endpoint": ""
+  },
   "nav": [
     { "label": "home", "href": "/" },
     { "label": "index", "href": "/posts/" },

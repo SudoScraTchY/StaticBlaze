@@ -13,7 +13,7 @@
                 you did not ask for.
             </p>
 
-            <form class="mt-8" data-form novalidate data-endpoint="">
+            <form class="mt-8" data-form novalidate data-endpoint="@Endpoint">
                 <div style="display:grid;gap:1.1rem;max-width:38rem">
                     <div>
                         <label class="field-label" for="c-name">name</label>
@@ -54,8 +54,14 @@
                         <span class="form-note" data-status aria-live="polite">not sent yet</span>
                     </div>
                     <p class="form-note" data-transport-note>
-                        Transport not configured in this build. The form validates, then tells you plainly
-                        that nothing was stored. See the handoff note for the one-line change.
+                        @if (string.IsNullOrWhiteSpace(Endpoint))
+                        {
+                            <span>Transport not configured in this build. The form validates, then tells you plainly that nothing was stored. Deploy <code>tools/submissions-server.mjs</code> and set <code>contact.endpoint</code> in <code>content/site.json</code> to turn it on; see docs/12-contact-endpoint.md.</span>
+                        }
+                        else
+                        {
+                            <span>Submissions are stored by the site's receiver and deleted on request. No tracking, no list.</span>
+                        }
                     </p>
                 </div>
             </form>
@@ -88,6 +94,9 @@
     [Parameter] public required SiteConfig Site { get; set; }
     [Parameter] public string? SceneData { get; set; }
     [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
+
+    [Parameter] public StaticBlaze.Core.Models.ContactConfig? Contact { get; set; }
+    private string Endpoint => Contact?.Endpoint ?? "";
 
     private string B => Site.BasePath;
 }

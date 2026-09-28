@@ -18,6 +18,9 @@ public sealed class SiteConfig
     /// <summary>Hero copy for the home page. Optional; the shell falls back to the site title and description.</summary>
     public HeroConfig Hero { get; set; } = new();
 
+    /// <summary>Contact form transport. Optional; blank endpoint means the form reports honestly.</summary>
+    public ContactConfig? Contact { get; set; }
+
     /// <summary>Post comments backed by GitHub Discussions (giscus). Optional; off unless configured.</summary>
     public GiscusConfig? Comments { get; set; }
 
@@ -26,6 +29,15 @@ public sealed class SiteConfig
     public string BasePath { get; set; } = "";
 }
 
+/// <summary>Contact form transport. When Endpoint is blank the form validates and says so honestly.</summary>
+public sealed class ContactConfig
+{
+    /// <summary>Absolute URL of a submission receiver (see tools/submissions-server.mjs).</summary>
+    public string Endpoint { get; set; } = "";
+
+    /// <summary>Shown under the form; override the default explanation.</summary>
+    public string? Note { get; set; }
+}
 /// <summary>GitHub Discussions comments via giscus. Null/unconfigured means the section never renders.</summary>
 public sealed class GiscusConfig
 {

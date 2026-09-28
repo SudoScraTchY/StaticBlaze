@@ -17,7 +17,7 @@
                         var months = new int[12];
                         foreach (var post in group) { months[post.Published.Month - 1]++; }
                         <div style="display:grid;grid-template-columns:4rem 1fr;gap:.8rem;align-items:center">
-                            <span class="row-date">@group.Key</span>
+                            <span class="row-date" title="@group.Count() posts in @group.Key">@group.Key <span style="color:var(--zafaran)">@group.Count()</span></span>
                             <span style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;align-items:end;height:2rem">
                                 @for (var m = 0; m < 12; m++)
                                 {
@@ -37,22 +37,28 @@
         </section>
     }
 
-    <section class="wrap" style="padding-block-end:clamp(3rem,7vw,6rem)">
-        <ul class="rows">
-            @{ var n = 0; }
-            @foreach (var post in Posts.OrderByDescending(p => p.Published))
+    <section class="wrap" style="padding-block-end:clamp(2.5rem,5vw,4rem)">
+        @foreach (var yearGroup in Posts.OrderByDescending(p => p.Published).GroupBy(p => p.Published.Year))
+        {
+            <div class="arc-year" data-arc-year="@yearGroup.Key">
+                <span class="y">@yearGroup.Key</span>
+                <span class="cnt">@yearGroup.Count() @(yearGroup.Count() == 1 ? "post" : "posts")</span>
+                <span class="cnt" style="color:var(--ink-faint)">@((yearGroup.Sum(p => p.ReadTimeMinutes) + 59) / 60) h read</span>
+            </div>
+            @foreach (var monthGroup in yearGroup.GroupBy(p => p.Published.Month).OrderByDescending(g => g.Key))
             {
-                n++;
-                <li>
-                    <a class="row" href="@(Base + post.Url)">
-                        <span class="row-idx">@n.ToString("000")</span>
-                        <span class="row-date">@post.Published.ToString("yyyy-MM-dd")</span>
-                        <span class="row-title">@post.Title</span>
-                        <span class="row-min">@post.ReadTimeMinutes min</span>
-                    </a>
-                </li>
+                <div class="arc-month" data-arc-month="@($"{yearGroup.Key}-{monthGroup.Key:00}")">
+                    <span class="m">@MonthName(monthGroup.Key)</span>
+                    <span class="posts">
+                        @foreach (var post in monthGroup.OrderByDescending(p => p.Published))
+                        {
+                            <a href="@(Base + post.Url)">@post.Title</a>
+                        }
+                    </span>
+                    <span class="cnt" title="@monthGroup.Count() in @MonthName(monthGroup.Key) @yearGroup.Key">@monthGroup.Count()</span>
+                </div>
             }
-        </ul>
+        }
         @if (Posts.Count == 0)
         {
             <p style="color:var(--ink-dim)">Nothing published yet.</p>
@@ -67,5 +73,6 @@
     [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
 
     private string Base => Site.BasePath;
-    private string PageDescription => $"The full archive of {Site.Title}: a year by month density field showing when things were written, then every post in chronological order.";
+    private string PageDescription => $"The full archive of {Site.Title}: a year by month density field, then every post grouped into named years and months with post counts.";
+    private static string MonthName(int month) => System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(month);
 }

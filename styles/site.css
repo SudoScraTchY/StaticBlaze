@@ -63,7 +63,7 @@
   opacity: 0; transition: opacity 900ms var(--e-out);
 }
 .stage[data-scene="live"] canvas { opacity: 1; }
-/* the scanline veil: reads as an instrument, keeps text legible over motion */
+/* the scanline overlay: keeps text legible over motion */
 .stage::after {
   content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
   background: repeating-linear-gradient(
@@ -522,18 +522,36 @@ html[data-anim="on"] [data-reveal].is-in { opacity: 1; }
 }
 .graph-tip:empty { display: none; }
 /* -------------------------------------------------------------------- *
- *  PAGE TRANSITION - three slats that close over the document
- *  Each slat is a third of the screen with the same gradient, offset so
- *  together they read as one shutter. motion.js drives scaleX per slat.
+ *  RELATED-POSTS GRAPH
+ *  SVG graph on the post page: central node = this post, ring of linked
+ *  posts = redirecting nodes. Build-style restraint: hairlines, one
+ *  accent, generous spacing. The static <ul> fallback serves no-JS.
  * -------------------------------------------------------------------- */
-.veil-slat {
-  position: absolute;
-  inset-block: 0;
-  width: 34.5%;
-  background: linear-gradient(100deg, var(--lajvard) 0%, var(--ground) 42%, var(--ground) 58%, var(--accent) 100%);
-  transform: scaleX(0);
-  will-change: transform;
-}
-.veil-slat:nth-child(1) { inset-inline-start: 0; }
-.veil-slat:nth-child(2) { inset-inline-start: 32.75%; }
-.veil-slat:nth-child(3) { inset-inline-start: 65.5%; background: linear-gradient(260deg, var(--lajvard) 0%, var(--ground) 42%, var(--ground) 58%, var(--accent) 100%); }
+[data-post-graph] { color-scheme: dark; }
+.graph-stage { inset: 0; }
+.graph-fallback { list-style: none; margin: 0; padding: 1.6rem 1.8rem; display: grid; gap: 0.55rem; }
+.graph-fallback li a { color: var(--ink-dim); text-decoration: none; font-family: var(--family-mono); font-size: var(--fs-2xs); }
+.graph-fallback li a:hover { color: var(--accent); }
+.graph-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-faint); font-family: var(--family-mono); font-size: var(--fs-2xs); margin: 0; }
+
+.gedge { stroke: var(--edge); stroke-width: 1; }
+.gdot { fill: var(--panel-2); stroke: var(--ink-dim); stroke-width: 1; transition: fill .25s, stroke .25s; }
+.gdot-self { fill: var(--lajvard-soft); stroke: var(--accent); stroke-width: 1.5; }
+.gring { fill: none; stroke: transparent; stroke-width: 1.5; }
+.gring-self { stroke: var(--accent); stroke-opacity: .5; }
+.glabel { transition: fill .25s; }
+a[data-node]:hover .gdot { fill: var(--accent-soft); stroke: var(--accent); }
+a[data-node]:hover .gring { stroke: var(--accent); stroke-opacity: .7; }
+a[data-node]:hover .glabel { fill: var(--ink); }
+a[data-node]:focus-visible { outline: none; }
+a[data-node]:focus-visible .gring { stroke: var(--accent); }
+.gnode { transform-box: fill-box; transform-origin: center; transition: opacity .25s, transform .25s; }
+
+/* -------------------------------------------------------------------- *
+ *  PAGE TRANSITION - accent progress sweep (Approach B)
+ *  A thin bar that sweeps once as the article refocuses out.
+ * -------------------------------------------------------------------- */
+[data-progress] { pointer-events: none; }
+
+/* the graph panel's label must not block node clicks */
+[data-post-graph] .panel-head { pointer-events: none; }

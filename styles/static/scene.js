@@ -370,45 +370,6 @@ function buildGraph(posts, rand) {
   resize();
   window.addEventListener('resize', resize, { passive: true });
 
-  /* per-article signal: same wireframe-icosahedron idea, now seeded by slug + tags */
-  const sigCanvas = document.querySelector('[data-signal] canvas');
-  let sig = null;
-  if (sigCanvas && current) {
-    const sRenderer = new THREE.WebGLRenderer({ canvas: sigCanvas, antialias: true, alpha: true });
-    sRenderer.setClearColor(C_GROUND, 0);
-    const sScene = new THREE.Scene();
-    const sCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    sCamera.position.z = 5.4;
-    const geo = new THREE.IcosahedronGeometry(1.7, 1);
-    const p = geo.attributes.position;
-    const randSig = mulberry32(hash(current));
-    for (let i = 0; i < p.count; i++) {
-      const v = new THREE.Vector3().fromBufferAttribute(p, i);
-      v.multiplyScalar(0.88 + randSig() * 0.3);
-      p.setXYZ(i, v.x, v.y, v.z);
-    }
-    geo.computeVertexNormals();
-    const mesh = new THREE.LineSegments(
-      new THREE.WireframeGeometry(geo),
-      new THREE.LineBasicMaterial({ color: C_ACCENT, transparent: true, opacity: 0.5 })
-    );
-    const core = new THREE.Mesh(
-      geo,
-      new THREE.MeshBasicMaterial({ color: C_LAJVARD, transparent: true, opacity: 0.12 })
-    );
-    sScene.add(mesh, core);
-    sig = { renderer: sRenderer, scene: sScene, camera: sCamera, mesh, core };
-    const sresize = () => {
-      const r = sigCanvas.getBoundingClientRect();
-      if (r.width === 0) return;
-      sRenderer.setSize(r.width, r.height, false);
-      sCamera.aspect = r.width / r.height;
-      sCamera.updateProjectionMatrix();
-    };
-    sresize();
-    window.addEventListener('resize', sresize, { passive: true });
-  }
-
   /* scroll progress: camera dollies in as the page scrolls (ScrollTrigger-set, not scroll events) */
   let progress = 0;
   if (window.ScrollTrigger) {
@@ -443,13 +404,6 @@ function buildGraph(posts, rand) {
     pick();
     renderer.render(scene, camera);
 
-    if (sig) {
-      sig.mesh.rotation.y += 0.0035;
-      sig.mesh.rotation.x = Math.sin(t * 1.4) * 0.25 + pointer.y * 0.3;
-      sig.core.rotation.copy(sig.mesh.rotation);
-      sig.core.scale.setScalar(1 + Math.sin(t * 4) * 0.03);
-      sig.renderer.render(sig.scene, sig.camera);
-    }
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

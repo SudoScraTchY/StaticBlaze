@@ -32,6 +32,11 @@
     {
         <script type="application/json" id="scene-data">@((MarkupString)SceneData)</script>
     }
+
+    @if (PostGraph is not null)
+    {
+        <script type="application/json" id="post-graph-data">@((MarkupString)PostGraph)</script>
+    }
     @if (JsonLd is not null)
     {
         <script type="application/ld+json">@((MarkupString)JsonLd)</script>
@@ -43,8 +48,7 @@
     @* the WebGL stage sits behind everything and never takes pointer events *@
     <div class="stage" data-stage aria-hidden="true"><canvas data-stage-canvas></canvas></div>
     <div class="grain" aria-hidden="true"></div>
-    <div data-veil aria-hidden="true"
-         style="position:fixed;inset:0;z-index:85;display:none;pointer-events:none"></div>
+    <div data-progress aria-hidden="true" style="position:fixed;inset-block-start:0;inset-inline:0;height:2px;z-index:86;background:linear-gradient(90deg,var(--lajvard),var(--accent));transform:scaleX(0);transform-origin:left"></div>
     <div data-spotlight aria-hidden="true"
          style="position:fixed;z-index:1;left:0;top:0;width:44rem;height:44rem;pointer-events:none;border-radius:999px;background:radial-gradient(circle,var(--accent-soft),transparent 62%)"></div>
 
@@ -131,6 +135,7 @@
     <script defer src="@(B)/assets/vendor/Flip.min.js"></script>
     <script type="module" src="@(B)/assets/site.js"></script>
     <script type="module" src="@(B)/assets/motion.js"></script>
+    <script type="module" src="@(B)/assets/graph.js"></script>
 </body>
 </html>
 
@@ -143,6 +148,9 @@
     [Parameter] public string? OgImage { get; set; }
     [Parameter] public string? JsonLd { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>JSON payload for the related-posts graph: the current post and the posts it links to.</summary>
+    [Parameter] public string? PostGraph { get; set; }
 
     /// <summary>JSON payload for the 3D field: the published posts, plus the current post when relevant.</summary>
     [Parameter] public string? SceneData { get; set; }

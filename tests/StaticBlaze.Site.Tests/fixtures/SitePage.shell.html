@@ -17,7 +17,7 @@
 
     <div class="stage" data-stage aria-hidden="true"><canvas data-stage-canvas></canvas></div>
     <div class="grain" aria-hidden="true"></div>
-    <div data-veil aria-hidden="true" style="position:fixed;inset:0;z-index:85;display:none;pointer-events:none"></div>
+    <div data-progress aria-hidden="true" style="position:fixed;inset-block-start:0;inset-inline:0;height:2px;z-index:86;background:linear-gradient(90deg,var(--lajvard),var(--accent));transform:scaleX(0);transform-origin:left"></div>
     <div data-spotlight aria-hidden="true" style="position:fixed;z-index:1;left:0;top:0;width:44rem;height:44rem;pointer-events:none;border-radius:999px;background:radial-gradient(circle,var(--accent-soft),transparent 62%)"></div><header class="cockpit"><div class="cockpit-in"><a href="/StaticBlaze/" class="brand" aria-label="mehrshad, home"><svg class="brand-mark" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M16 2.5 28.5 9.5v13L16 29.5 3.5 22.5v-13L16 2.5Z"></path>
                     <path d="M16 9.5 22 13v6l-6 3.5L10 19v-6l6-3.5Z"></path>
                     <circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none"></circle></svg>
@@ -52,4 +52,5 @@
     <script defer src="/StaticBlaze/assets/vendor/ScrollToPlugin.min.js"></script>
     <script defer src="/StaticBlaze/assets/vendor/Flip.min.js"></script>
     <script type="module" src="/StaticBlaze/assets/site.js"></script>
-    <script type="module" src="/StaticBlaze/assets/motion.js"></script></body></html>
+    <script type="module" src="/StaticBlaze/assets/motion.js"></script>
+    <script type="module" src="/StaticBlaze/assets/graph.js"></script></body></html>

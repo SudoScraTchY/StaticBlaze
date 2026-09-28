@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -85,6 +86,28 @@ object ScenePayload(PostSummary? current = null)
 
 string SceneJson(PostSummary? current = null) => Encode(ScenePayload(current));
 
+// The interactive related-posts graph on the post page. LinkedPostsOf extracts every internal post
+// link from the rendered article body (so it can never drift from what the reader sees); the JSON
+// payload hands graph.js the same set, with the current post as the central node.
+List<PostSummary> LinkedPostsOf(Post post)
+{
+    var bySlug = manifest.Posts.ToDictionary(p => p.Slug, StringComparer.OrdinalIgnoreCase);
+    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { post.Slug };
+    var links = new List<PostSummary>();
+    // href may be "/posts/slug/" or "/StaticBlaze/posts/slug/": capture the trailing slug segment.
+    foreach (Match m in Regex.Matches(post.Html, @"href=""(?:[^""]*)/posts/([^/""]+)/""", RegexOptions.IgnoreCase))
+    {
+        var slug = m.Groups[1].Value;
+        if (!seen.Add(slug)) continue;                 // dedupe + drop self-links
+        if (bySlug.TryGetValue(slug, out var target)) links.Add(target);  // only real posts become nodes
+    }
+    return links;
+}
+string PostGraphJson(Post post, SiteConfig site, List<PostSummary> links) => Encode(new
+{
+    self = new { slug = post.Slug, title = post.Title, url = site.BasePath + post.Url },
+    links = links.Select(t => new { slug = t.Slug, title = t.Title, url = site.BasePath + t.Url }).ToArray(),
+});
 string PostsJson() => Encode(new
 {
     posts = manifest.Posts.Select(p => new { slug = p.Slug, title = p.Title, tags = p.Tags, category = p.Category, published = p.Published.ToString("yyyy-MM-dd") }).ToArray(),
@@ -141,6 +164,7 @@ foreach (var post in posts)
         related = [.. self.Related.Where(r => summaryBySlug.ContainsKey(r)).Select(r => summaryBySlug[r])];
 
     var categoryTitle = content.FindCategory(post.Frontmatter.Category)?.Title ?? post.Frontmatter.Category;
+    var graphLinks = LinkedPostsOf(post);
     await WritePageAsync($"{post.Url.TrimStart('/')}/index.html".Replace("//", "/"), Render<PostPage>(new Dictionary<string, object?>
     {
         ["Site"] = site,
@@ -150,6 +174,8 @@ foreach (var post in posts)
         ["Related"] = related,
         ["SceneData"] = SceneJson(summaryBySlug.TryGetValue(post.Slug, out var s) ? s : null),
         ["Comments"] = site.Comments,
+        ["LinkedPosts"] = graphLinks,
+        ["PostGraph"] = PostGraphJson(post, site, graphLinks),
         ["PostsJson"] = sharedPosts,
     }));
 }

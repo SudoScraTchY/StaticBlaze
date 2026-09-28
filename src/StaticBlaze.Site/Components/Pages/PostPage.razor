@@ -2,7 +2,7 @@
    its own geometry, seeded from the slug. The reading rail is driven by ScrollTrigger, not a scroll listener. *@
 <SitePage Site=@Site Title=@Post.Title Description=@Post.Frontmatter.Description Canonical=@Post.Url
           OgType="article" OgImage=@Post.Frontmatter.Thumbnail JsonLd=@JsonLd ShowRail="true"
-          SceneData=@SceneData PostsJson=@PostsJson>
+          SceneData=@SceneData PostsJson=@PostsJson PostGraph=@PostGraph>
     <article class="wrap" style="padding-block:clamp(2rem,5vw,4rem)">
         <header class="split split-8-4" style="align-items:start">
             <div>
@@ -23,12 +23,28 @@
                     }
                 </p>
             </div>
-            @* the per-article signal. Falls back to a static plate if three.js never loads. *@
-            <div class="panel" data-signal style="aspect-ratio:4/3;position:relative;overflow:hidden">
-                <canvas data-signal-canvas aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
-                <span class="panel-head" style="border:0;position:absolute;inset-block-start:0;inset-inline:0">
-                    <span>signal</span><span>@Post.Frontmatter.Slug</span>
+            @* Related-posts graph. The current post is the central node; every post linked inside the
+               article body is a redirecting node. The list below is the no-JS fallback (real links,
+               crawlable); graph.js upgrades it into the SVG graph when JS runs. *@
+            <div class="panel" data-post-graph style="aspect-ratio:4/3;position:relative;overflow:hidden">
+                <span class="panel-head" style="border:0;position:absolute;inset-block-start:0;inset-inline:0;z-index:2">
+                    <span>graph</span><span>@Post.Frontmatter.Slug</span>
                 </span>
+                <div class="graph-stage" data-graph-stage style="position:absolute;inset:0">
+                    @if (LinkedPosts.Count == 0)
+                    {
+                        <p class="graph-empty" data-graph-empty>no posts linked inside this article yet</p>
+                    }
+                    else
+                    {
+                        <ul class="graph-fallback" data-graph-fallback>
+                            @foreach (var link in LinkedPosts)
+                            {
+                                <li><a href="@(B + link.Url)">@link.Title</a></li>
+                            }
+                        </ul>
+                    }
+                </div>
             </div>
         </header>
 
@@ -121,12 +137,14 @@
 </SitePage>
 
 @code {
+    [Parameter] public System.Collections.Generic.IReadOnlyList<StaticBlaze.Core.Models.PostSummary> LinkedPosts { get; set; } = System.Array.Empty<StaticBlaze.Core.Models.PostSummary>();
     [Parameter] public StaticBlaze.Core.Models.GiscusConfig? Comments { get; set; }
     [Parameter] public required SiteConfig Site { get; set; }
     [Parameter] public required Post Post { get; set; }
     [Parameter] public AuthorRecord? Author { get; set; }
     [Parameter] public string CategoryTitle { get; set; } = "";
     [Parameter] public required IReadOnlyList<PostSummary> Related { get; set; }
+    [Parameter] public string? PostGraph { get; set; }
     [Parameter] public string? SceneData { get; set; }
     [Parameter] public string PostsJson { get; set; } = """{"posts":[]}""";
 

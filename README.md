@@ -320,6 +320,8 @@ Full detail: `docs/09-deep-field-handoff.md`.
 | `docs/09-deep-field-handoff.md` | the redesign handoff: decisions, motion spec, failure matrix |
 | `docs/10-design-changes.md` | how to change the design, manually and via an agent |
 | `docs/11-agent-ui-context.md` | per-page feature inventory for an AI agent (design-direction placeholder) |
+| `docs/12-contact-endpoint.md` | how the contact form stores messages: receiver, deployment, guards |
+| `CHANGELOG.md` | what changed, newest first |
 
 ## Status
 
@@ -329,6 +331,10 @@ Full detail: `docs/09-deep-field-handoff.md`.
 - [x] Mermaid rendered client-side (12 diagram types in the capability-check post) + highlight.js + copy buttons
 - [x] Obsidian-style archive graph with hub labels and hover neighbourhood dimming
 - [x] Content focus-pull page transition (blur refocus) with reduced-motion and bfcache safety
+- [x] Related-posts graph on every post: zoom buttons, draggable nodes, hover spotlight
+- [x] Archive grouped by named year and month with post counts; density field retained
+- [x] About page: identity, work and reach sections; no post listing
+- [x] Contact form wired to a documented receiver with rate limiting and webhook notification
 - [x] Comments via GitHub Discussions (giscus), config-driven, off until configured
 - [x] Deployment: Actions → OIDC → Pages, no PAT, post-deploy live verification in the workflow
 - [x] Admin: encrypted vault, SHA-aware GitHub client, Toast UI editor, SkiaSharp media pipeline

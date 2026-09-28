@@ -28,7 +28,9 @@ It is the audit trail for the "keep technical/architectural, remove agent-specif
 |---|---|
 | `docs/10-design-changes.md` | How to change the design, manually and via an agent |
 | `docs/11-agent-ui-context.md` | Per-page feature inventory for an AI agent (no design prescription; ends in a user-input placeholder) |
+| `docs/12-contact-endpoint.md` | How the contact form stores messages: receiver, deployment, guards |
 | `docs/prototypes/page-transition-prototypes.html` | Side-by-side prototype record: full-window wipe vs partial blur refocus |
+| `CHANGELOG.md` (repo root) | Notable changes, newest first |
 
 ## Ambiguity policy
 

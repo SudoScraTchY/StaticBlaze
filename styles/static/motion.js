@@ -194,43 +194,35 @@
   }
 
   /* ------------------------------------------------------------------ *
-   *  4. PAGE TRANSITION - a layered shutter, not a flat wipe
-   *  Outgoing: the document lifts, blurs and dims while three slats close
-   *  over it in sequence. Navigation happens while the screen is covered.
-   *  Incoming: the new document's main content rises in with a short
-   *  stagger, so every page opens with the same signature move.
-   *  Safety: a hard timer still navigates if the timeline is interrupted,
-   *  the veil clears on bfcache restores, and reduced motion never plays.
+   *  4. PAGE TRANSITION - a content "focus pull" (Approach B)
+   *  The header and the 3D background never move; only the article
+   *  refocuses. Outgoing: blur + shrink + fade with an accent progress
+   *  sweep across the top. Incoming: the new page resolves in crisp.
+   *  Reduced motion, bfcache restores and the hard navigation timer all
+   *  keep it safe. This replaced the slat shutter, which read as heavy
+   *  and reset the whole instrument on every click.
    * ------------------------------------------------------------------ */
-  const veil = q('[data-veil]');
+  const bar = q('[data-progress]');
   const main = q('#main') || q('main');
-  if (veil) {
-    // three slats share one gradient; each gets its own transform origin
-    const slats = [];
-    for (let i = 0; i < 3; i++) {
-      const s = document.createElement('div');
-      s.className = 'veil-slat';
-      s.setAttribute('aria-hidden', 'true');
-      veil.appendChild(s);
-      slats.push(s);
+  const soft = window.matchMedia('(pointer: fine)').matches;
+
+  const navigateAfter = (to) => { window.location.href = to; };
+
+  const playOut = (to) => {
+    // hard safety: navigate even if the timeline is interrupted
+    window.setTimeout(() => navigateAfter(to), 700);
+    const tl = gsap.timeline({ onComplete: () => navigateAfter(to) });
+    if (bar) tl.to(bar, { scaleX: 1, duration: 0.3, ease: 'power3.in' }, 0);
+    if (main && soft) {
+      tl.to(main, { scale: 0.985, y: -8, opacity: 0.12, filter: 'blur(10px)', duration: 0.32, ease: 'power3.in' }, 0);
+    } else if (main) {
+      tl.to(main, { opacity: 0.1, duration: 0.28, ease: 'power2.in' }, 0);
+    } else {
+      tl.to({}, { duration: 0.3 }, 0);
     }
+  };
 
-    const play = (to) => {
-      gsap.set(veil, { display: 'block', opacity: 1 });
-      gsap.set(slats, { scaleX: 0, transformOrigin: (i) => (i % 2 ? 'right center' : 'left center') });
-      const tl = gsap.timeline({ defaults: { ease: 'power3.inOut' } });
-      if (main) {
-        tl.to(main, { y: -26, opacity: 0.15, filter: 'blur(6px)', duration: 0.34 }, 0)
-          .to(slats, { scaleX: 1, duration: 0.42, stagger: 0.05 }, 0.08)
-          .add(() => { window.location.href = to; })
-          .to({}, { duration: 0.02 }); // hold one tick so the cover is fully painted
-      } else {
-        tl.to(slats, { scaleX: 1, duration: 0.42, stagger: 0.05 })
-          .add(() => { window.location.href = to; })
-          .to({}, { duration: 0.02 });
-      }
-    };
-
+  if (bar || main) {
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href]');
       if (!a) return;
@@ -239,27 +231,23 @@
       if (a.host !== window.location.host || href.startsWith('#') || href.startsWith('mailto:')) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
       e.preventDefault();
-      // hard safety: if the shutter stalls for any reason, navigate anyway
-      window.setTimeout(() => { window.location.href = a.href; }, 900);
-      play(a.href);
+      playOut(a.href);
     });
 
-    // the shutter must never survive a back/forward restore
-    const clear = () => {
-      gsap.set(veil, { display: 'none', opacity: 0 });
-      gsap.set(slats, { scaleX: 0 });
-      if (main) gsap.set(main, { y: 0, opacity: 1, filter: 'none' });
+    // bfcache restore: never leave the article blurred
+    const settle = () => {
+      if (bar) gsap.set(bar, { scaleX: 0 });
+      if (main) gsap.set(main, { scale: 1, y: 0, opacity: 1, filter: 'none' });
     };
-    window.addEventListener('pageshow', clear);
-    clear();
+    window.addEventListener('pageshow', settle);
 
-    /* incoming reveal: rise + settle once the new document paints */
+    /* incoming: resolve in crisp, once */
     const reveal = () => {
-      const targets = main ? [main, ...qa('[data-hero-stagger]', main).slice(0, 6)] : [];
-      if (!targets.length) return;
-      gsap.fromTo(targets,
-        { y: 22, opacity: 0, filter: 'blur(5px)' },
-        { y: 0, opacity: 1, filter: 'none', duration: 0.66, ease: 'expo.out', stagger: 0.055, clearProps: 'filter,will-change' });
+      if (bar) gsap.set(bar, { scaleX: 0 });
+      if (!main || !soft) return;
+      gsap.fromTo(main,
+        { opacity: 0, y: 16, filter: 'blur(6px)' },
+        { opacity: 1, y: 0, filter: 'none', duration: 0.55, ease: 'expo.out', clearProps: 'filter,will-change' });
     };
     if (document.readyState === 'complete') reveal();
     else window.addEventListener('load', reveal, { once: true });

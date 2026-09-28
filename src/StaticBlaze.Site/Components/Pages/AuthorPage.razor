@@ -1,7 +1,6 @@
-@* About / author. Redesigned: identity, work and reachability. The post list is deliberately gone -
+@* About / author. Identity, work and reachability. The post list is deliberately gone -
    this page is about the person, not the archive (the archive is at /archive/).
-   PERSONALITY RUNDOWN: the "who i am" prose is a clearly-marked placeholder until the author
-   supplies it; the structure below is final. *@
+   The "who i am" prose is the author's own personality rundown, condensed to fit the page. *@
 <SitePage Site=@Site Title=@PageTitle Description=@PageDescription Canonical=@CanonicalPath
           SceneData=@SceneData PostsJson=@PostsJson>
     <section class="sec wrap split split-7-5" style="align-items:start;padding-block-end:1rem">
@@ -13,8 +12,7 @@
                 <p class="mt-4" style="color:var(--ink-dim);max-width:60ch;font-size:var(--fs-md)">@Author.Bio</p>
             }
             <p class="mt-4" style="color:var(--ink-faint);max-width:60ch;font-size:var(--fs-sm)">
-                This blog is where I work things out in public: systems, tooling, and the occasional
-                detour into colour, type and cars.
+                This blog is where I work things out in public, rabbit holes included.
             </p>
         </div>
         <div class="sticky-side">
@@ -38,35 +36,71 @@
         <div>
             <h2 class="eyebrow"><b>03</b>who i am</h2>
 
-            @* ==== PLACEHOLDER: personality rundown goes here ==== *@
-            <div class="about-note" data-placeholder="personality-rundown">
-                <b>awaiting personality rundown.</b> The structure below is final and the sections are
-                wired; the copy lands in this block the moment you send it. Nothing here invents facts
-                about you in the meantime.
+            <div style="display:grid;gap:1.1rem;max-width:64ch;margin-block-start:1rem">
+                <p style="color:var(--ink-dim);font-size:var(--fs-sm)">
+                    I'm a curious systems-builder with a mild obsession with understanding how things
+                    actually work. I gravitate toward complicated things — not because I enjoy
+                    complexity for its own sake, but because I get uncomfortable when something feels
+                    like a black box. I want to know what's underneath it, what the trade-offs are,
+                    where it breaks, and why people made the decisions they did.
+                </p>
+                <p style="color:var(--ink-dim);font-size:var(--fs-sm)">
+                    I'm naturally analytical, skeptical, and fairly independent-minded. I don't enjoy
+                    accepting something as "best practice" simply because everyone else does; my
+                    instinct is to ask why, then see whether the answer survives scrutiny. And I'm more
+                    of a builder than a performer — I'd rather quietly become good at something than
+                    convince everyone I'm already good at it.
+                </p>
+                <p style="color:var(--ink-dim);font-size:var(--fs-sm)">
+                    I also have a tendency to go down rabbit holes. A simple question can become a
+                    three-hour investigation; a small project can turn into an exploration of an entire
+                    ecosystem. It is both one of my strengths and one of my recurring problems: the
+                    curiosity sometimes expands the scope faster than the ability to finish it.
+                </p>
             </div>
 
-            <div style="display:grid;gap:1.5rem;max-width:62ch">
+            <blockquote class="pull-quote" data-pull-quote>
+                I don't just want to know what works. I want to know why it works, why it might stop
+                working, and whether I can build a better version myself.
+            </blockquote>
+
+            <div style="display:grid;gap:1.5rem;max-width:64ch">
                 <div data-about-section="how-i-work">
                     <h3 style="font-size:var(--fs-md);font-weight:600">how i work</h3>
                     <p class="mt-2" style="color:var(--ink-dim);font-size:var(--fs-sm)">
-                        [placeholder] What the day looks like, what problems I reach for first, how I
-                        decide when something is done.
+                        Analytical, independent, future-oriented — somewhere around INTJ with strong
+                        INTP tendencies. I like having a direction, and I enjoy questioning that
+                        direction once I understand the problem better. I care about competence,
+                        sometimes more than I should, which also means I can be overly critical of my
+                        own work: "good enough" is difficult when I can clearly see how something
+                        could be improved.
                     </p>
                 </div>
                 <div data-about-section="what-i-build">
                     <h3 style="font-size:var(--fs-md);font-weight:600">what i build</h3>
                     <p class="mt-2" style="color:var(--ink-dim);font-size:var(--fs-sm)">
-                        [placeholder] The stack I live in, the kind of systems I enjoy, and the ones I
-                        avoid on purpose.
+                        I'm not purely theoretical. Ideas become much more interesting to me once I can
+                        turn them into something tangible, experiment with them, break them, and
+                        rebuild them. I have a strong preference for control and understanding over
+                        convenience: abstractions and managed services are fine when they make sense,
+                        but I want to know what I'm giving up in exchange. I like tools that are
+                        transparent, composable and replaceable rather than systems that lock me in.
                     </p>
                 </div>
                 <div data-about-section="outside-the-editor">
                     <h3 style="font-size:var(--fs-md);font-weight:600">outside the editor</h3>
                     <p class="mt-2" style="color:var(--ink-dim);font-size:var(--fs-sm)">
-                        [placeholder] The rest of it: cars, colour, whatever keeps the curiosity fed.
+                        Late night, dark UI, a Linux terminal, too many browser tabs, coffee, a
+                        half-finished project, and one rabbit hole that was absolutely not supposed to
+                        take six hours. A technology I meet today can send me into documentation,
+                        source code, benchmarks and architecture discussions before the day is out.
                     </p>
                 </div>
             </div>
+
+            <p class="mt-6" style="font-family:var(--family-mono);font-size:var(--fs-2xs);color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase">
+                curious · analytical · independent · builder-minded · skeptical · systems-oriented
+            </p>
         </div>
 
         <div class="sticky-side">
@@ -119,7 +153,7 @@
     private int YearsWriting => Posts.Count == 0 ? 0 : Posts.Select(p => p.Published.Year).Distinct().Count();
     private int TotalWords => Posts.Sum(p => p.ReadTimeMinutes) * 200;
 
-    private static string Host(string url) => System.Uri.TryCreate(url, System.UriKind.Absolute, out var u)
+    private static string Host(string url) => System.Uri.TryCreate(url, UriKind.Absolute, out var u)
         ? u.Host.Replace("www.", "")
         : url;
 }

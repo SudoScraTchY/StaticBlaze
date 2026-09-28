@@ -635,16 +635,7 @@ a[data-node]:focus-visible .gring { stroke: var(--accent); }
 /* -------------------------------------------------------------------- *
  *  ABOUT - sections for the redesigned page
  * -------------------------------------------------------------------- */
-.about-note {
-  border: 1px dashed var(--edge-2);
-  border-radius: var(--r-1);
-  padding: 1.1rem 1.25rem;
-  color: var(--ink-faint);
-  font-family: var(--family-mono);
-  font-size: var(--fs-xs);
-  margin-block: 1.5rem;
-}
-.about-note b { color: var(--zafaran); font-weight: 500; }
+
 .reach-list { display: grid; gap: 0.55rem; }
 .reach-list a {
   display: flex; justify-content: space-between; gap: 1rem;
@@ -663,3 +654,17 @@ a[data-node] { cursor: grab; }
 a[data-node].is-dragging, a[data-node]:active { cursor: grabbing; }
 .glabel.is-hot { fill: var(--ink); }
 .gnode.is-dragging { opacity: 1 !important; }
+
+/* -------------------------------------------------------------------- *
+ *  PULL QUOTE - the line that carries the about page
+ * -------------------------------------------------------------------- */
+.pull-quote {
+  margin: 1.75rem 0;
+  padding-inline-start: 1.25rem;
+  border-inline-start: 2px solid var(--accent);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1.5;
+  max-width: 56ch;
+}

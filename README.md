@@ -328,7 +328,7 @@ Full detail: `docs/09-deep-field-handoff.md`.
 - [x] Client-side search over a lazy-loaded index, with `/` to focus and arrow-key selection
 - [x] Mermaid rendered client-side (12 diagram types in the capability-check post) + highlight.js + copy buttons
 - [x] Obsidian-style archive graph with hub labels and hover neighbourhood dimming
-- [x] Layered page-change shutter with reduced-motion and bfcache safety
+- [x] Content focus-pull page transition (blur refocus) with reduced-motion and bfcache safety
 - [x] Comments via GitHub Discussions (giscus), config-driven, off until configured
 - [x] Deployment: Actions → OIDC → Pages, no PAT, post-deploy live verification in the workflow
 - [x] Admin: encrypted vault, SHA-aware GitHub client, Toast UI editor, SkiaSharp media pipeline

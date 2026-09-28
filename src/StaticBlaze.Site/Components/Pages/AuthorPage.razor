@@ -1,49 +1,98 @@
-@* Author, and the about route which is the same page for the default author. *@
+@* About / author. Redesigned: identity, work and reachability. The post list is deliberately gone -
+   this page is about the person, not the archive (the archive is at /archive/).
+   PERSONALITY RUNDOWN: the "who i am" prose is a clearly-marked placeholder until the author
+   supplies it; the structure below is final. *@
 <SitePage Site=@Site Title=@PageTitle Description=@PageDescription Canonical=@CanonicalPath
           SceneData=@SceneData PostsJson=@PostsJson>
-    <section class="sec wrap split split-7-5" style="align-items:start">
+    <section class="sec wrap split split-7-5" style="align-items:start;padding-block-end:1rem">
         <div>
             <p class="eyebrow"><b>01</b>@Author.Handle</p>
-            <h1 class="mt-4" style="font-size:var(--fs-xl)">@PageTitle</h1>
+            <h1 class="mt-4" style="font-size:var(--fs-xl);max-width:22ch">@PageTitle</h1>
             @if (!string.IsNullOrEmpty(Author.Bio))
             {
-                <p class="mt-4" style="color:var(--ink-dim);max-width:56ch;font-size:var(--fs-md)">@Author.Bio</p>
+                <p class="mt-4" style="color:var(--ink-dim);max-width:60ch;font-size:var(--fs-md)">@Author.Bio</p>
             }
-            <div class="mt-6" style="display:flex;flex-wrap:wrap;gap:1rem">
-                @if (Author.Website is { } website)
-                {
-                    <a class="btn" href="@website" rel="me">website</a>
-                }
-                @foreach (var (network, handle) in Author.Social)
-                {
-                    var host = network is "x" ? "x.com" : network + ".com";
-                    <a class="btn" href="https://@(host)/@handle" rel="me">@network</a>
-                }
-            </div>
+            <p class="mt-4" style="color:var(--ink-faint);max-width:60ch;font-size:var(--fs-sm)">
+                This blog is where I work things out in public: systems, tooling, and the occasional
+                detour into colour, type and cars.
+            </p>
         </div>
         <div class="sticky-side">
             <div class="panel">
-                <p class="panel-head"><span>readout</span><span>02</span></p>
+                <p class="panel-head"><span>at a glance</span><span>02</span></p>
                 <div style="padding:1.25rem;display:flex;gap:2.5rem">
                     <div>
-                        <span class="metric" data-count="@Posts.Count">@Posts.Count</span>
-                        <span class="metric-label">posts</span>
+                        <span class="metric" data-count="@YearsWriting">@YearsWriting</span>
+                        <span class="metric-label">years writing</span>
                     </div>
                     <div>
-                        <span class="metric" data-count="@TotalMinutes">@TotalMinutes</span>
-                        <span class="metric-label">minutes</span>
+                        <span class="metric" data-count="@TotalWords">@TotalWords</span>
+                        <span class="metric-label">words</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="wrap" style="padding-block-end:clamp(3rem,7vw,6rem)">
-        <div class="grid-nodes">
-            @for (var i = 0; i < Posts.Count; i++)
-            {
-                <PostCard Post=@Posts[i] Base=@B Index=@(i + 1) />
-            }
+    <section class="wrap split split-7-5" style="align-items:start">
+        <div>
+            <h2 class="eyebrow"><b>03</b>who i am</h2>
+
+            @* ==== PLACEHOLDER: personality rundown goes here ==== *@
+            <div class="about-note" data-placeholder="personality-rundown">
+                <b>awaiting personality rundown.</b> The structure below is final and the sections are
+                wired; the copy lands in this block the moment you send it. Nothing here invents facts
+                about you in the meantime.
+            </div>
+
+            <div style="display:grid;gap:1.5rem;max-width:62ch">
+                <div data-about-section="how-i-work">
+                    <h3 style="font-size:var(--fs-md);font-weight:600">how i work</h3>
+                    <p class="mt-2" style="color:var(--ink-dim);font-size:var(--fs-sm)">
+                        [placeholder] What the day looks like, what problems I reach for first, how I
+                        decide when something is done.
+                    </p>
+                </div>
+                <div data-about-section="what-i-build">
+                    <h3 style="font-size:var(--fs-md);font-weight:600">what i build</h3>
+                    <p class="mt-2" style="color:var(--ink-dim);font-size:var(--fs-sm)">
+                        [placeholder] The stack I live in, the kind of systems I enjoy, and the ones I
+                        avoid on purpose.
+                    </p>
+                </div>
+                <div data-about-section="outside-the-editor">
+                    <h3 style="font-size:var(--fs-md);font-weight:600">outside the editor</h3>
+                    <p class="mt-2" style="color:var(--ink-dim);font-size:var(--fs-sm)">
+                        [placeholder] The rest of it: cars, colour, whatever keeps the curiosity fed.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="sticky-side">
+            <div class="panel">
+                <p class="panel-head"><span>reach me</span><span>04</span></p>
+                <div style="padding:1rem">
+                    <div class="reach-list">
+                        <a href="@(B)/contact/">contact form <span>easiest</span></a>
+                        @if (Author.Website is { } website)
+                        {
+                            <a href="@website" rel="me">website <span>@Host(website)</span></a>
+                        }
+                        @foreach (var (network, handle) in Author.Social)
+                        {
+                            var host = network is "x" ? "x.com" : network + ".com";
+                            <a href="https://@(host)/@handle" rel="me">@network <span>@handle</span></a>
+                        }
+                        <a href="@(B)/rss.xml">rss <span>@(B)/rss.xml</span></a>
+                        <a href="@(B)/atom.xml">atom <span>@(B)/atom.xml</span></a>
+                    </div>
+                    <p class="form-note" style="margin-block-start:1rem">
+                        Replies go to whatever address you leave in the form; nothing is sold or added
+                        to a list.
+                    </p>
+                </div>
+            </div>
         </div>
     </section>
 </SitePage>
@@ -65,5 +114,12 @@
     private string PageDescription => DescriptionOverride ?? (string.IsNullOrWhiteSpace(Author.Bio)
         ? $"{Author.Name} writes about systems, software and the tools in between at {Site.Title}."
         : Author.Bio);
-    private int TotalMinutes => Posts.Sum(p => p.ReadTimeMinutes);
+
+    // identity stats only; the post list lives on /archive/ and the index
+    private int YearsWriting => Posts.Count == 0 ? 0 : Posts.Select(p => p.Published.Year).Distinct().Count();
+    private int TotalWords => Posts.Sum(p => p.ReadTimeMinutes) * 200;
+
+    private static string Host(string url) => System.Uri.TryCreate(url, System.UriKind.Absolute, out var u)
+        ? u.Host.Replace("www.", "")
+        : url;
 }

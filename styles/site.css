@@ -555,3 +555,111 @@ a[data-node]:focus-visible .gring { stroke: var(--accent); }
 
 /* the graph panel's label must not block node clicks */
 [data-post-graph] .panel-head { pointer-events: none; }
+
+/* -------------------------------------------------------------------- *
+ *  HERO META - the right rail: a small data readout that gives the hero
+ *  something to say beyond the headline. Desktop only; hairline frames.
+ * -------------------------------------------------------------------- */
+.hero { position: relative; }
+.hero-meta {
+  display: none;
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: 0.5rem;
+  font-family: var(--family-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: end;
+  display: grid;
+  gap: 0.4rem;
+}
+@media (max-width: 1023px) { .hero-meta { display: none; } }
+.hero-meta b { color: var(--ink-dim); font-weight: 500; }
+
+/* -------------------------------------------------------------------- *
+ *  GRAPH CONTROLS - zoom +/- on the post-page graph
+ * -------------------------------------------------------------------- */
+.g-zoom {
+  position: absolute;
+  inset-block-end: 0.75rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem; height: 2rem;
+  border: 1px solid var(--edge-2);
+  border-radius: var(--r-1);
+  background: color-mix(in oklab, var(--ground) 82%, transparent);
+  color: var(--ink);
+  font-family: var(--family-mono);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.g-zoom:hover { border-color: var(--accent); color: var(--accent); }
+.g-zoom:disabled { opacity: 0.35; cursor: default; }
+.g-zoom:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.g-zoom[data-zoom="in"]  { inset-inline-end: 3.1rem; }
+.g-zoom[data-zoom="out"] { inset-inline-end: 0.75rem; }
+[data-post-graph] svg.g-panning { cursor: grabbing; }
+
+/* -------------------------------------------------------------------- *
+ *  ARCHIVE - named year/month groups with counts
+ * -------------------------------------------------------------------- */
+.arc-year {
+  border-top: 1px solid var(--edge);
+  padding-block: 1.4rem 0.4rem;
+  margin-block-start: 1.2rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+}
+.arc-year .y { font-family: var(--family-mono); font-size: var(--fs-lg); color: var(--ink); font-weight: 500; }
+.arc-year .cnt { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--zafaran); letter-spacing: 0.1em; }
+.arc-month {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr auto;
+  gap: 1rem;
+  padding-block: 0.55rem;
+  border-bottom: 1px solid var(--edge);
+  align-items: baseline;
+}
+.arc-month .m { font-family: var(--family-mono); font-size: var(--fs-sm); color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+.arc-month .posts { display: grid; gap: 0.3rem; }
+.arc-month .posts a { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-sm); }
+.arc-month .posts a:hover { color: var(--accent); }
+.arc-month .cnt { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--ink-faint); }
+
+/* -------------------------------------------------------------------- *
+ *  ABOUT - sections for the redesigned page
+ * -------------------------------------------------------------------- */
+.about-note {
+  border: 1px dashed var(--edge-2);
+  border-radius: var(--r-1);
+  padding: 1.1rem 1.25rem;
+  color: var(--ink-faint);
+  font-family: var(--family-mono);
+  font-size: var(--fs-xs);
+  margin-block: 1.5rem;
+}
+.about-note b { color: var(--zafaran); font-weight: 500; }
+.reach-list { display: grid; gap: 0.55rem; }
+.reach-list a {
+  display: flex; justify-content: space-between; gap: 1rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-1);
+  padding: 0.7rem 0.9rem;
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+}
+.reach-list a:hover { border-color: var(--accent); color: var(--accent); }
+.reach-list a span { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--ink-faint); }
+
+/* graph interaction states */
+a[data-node] { cursor: grab; }
+a[data-node].is-dragging, a[data-node]:active { cursor: grabbing; }
+.glabel.is-hot { fill: var(--ink); }
+.gnode.is-dragging { opacity: 1 !important; }

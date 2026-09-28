@@ -43,6 +43,13 @@
                 </div>
 
                 <div data-hero-line style="height:1px;background:linear-gradient(90deg,var(--lajvard),var(--accent),transparent)"></div>
+                @* a quiet data rail: something to read besides the headline, and it is all true *@
+                <aside class="hero-meta" data-hero-stagger aria-label="site readout">
+                    <span>since <b>@FirstPostYear</b></span>
+                    <span>last post <b>@LastPostDate</b></span>
+                    <span>base <b>@B</b></span>
+                    <span>engine <b>.NET 10</b></span>
+                </aside>
             </div>
         </section>
 
@@ -120,6 +127,8 @@
     private int PostsPublished => AllPosts.Count;
     private int YearsWriting => AllPosts.Count == 0 ? 0 : AllPosts.Select(p => p.Published.Year).Distinct().Count();
     private int TotalWords => AllPosts.Sum(p => p.ReadTimeMinutes) * 200;
+    private string FirstPostYear => AllPosts.Count == 0 ? "-" : AllPosts.Min(p => p.Published.Year).ToString();
+    private string LastPostDate => AllPosts.Count == 0 ? "-" : AllPosts.Max(p => p.Published).ToString("yyyy-MM-dd");
 
     private string JsonLd => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
     {

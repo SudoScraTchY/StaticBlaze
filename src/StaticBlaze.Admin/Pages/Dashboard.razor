@@ -3,7 +3,15 @@
 @inject PostService Posts
 @inject MediaService Media
 
-<h1 class="section-label mb-8" data-n="01">dashboard</h1>
+<div class="page-head">
+    <div>
+        <span class="crumb">admin / dashboard</span>
+        <h1>Dashboard</h1>
+    </div>
+    <div class="page-actions">
+        <a href="posts/edit" class="btn btn-primary">new post</a>
+    </div>
+</div>
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
     @foreach (var stat in _stats)

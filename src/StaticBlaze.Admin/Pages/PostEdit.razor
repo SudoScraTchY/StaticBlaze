@@ -5,79 +5,102 @@
 @inject PreviewRenderer Preview
 @implements IAsyncDisposable
 
-<h1 class="section-label mb-8" data-n="03">@(IsNew ? "new post" : "edit post")</h1>
+@* Layout: the editor owns the width. Title spans the working column, the markdown editor takes
+   the rest, and metadata + the parity preview live in the side panel where they do not push the
+   writing surface down the page. Save sits in the page header so it is always reachable. *@
+
+<div class="page-head">
+    <div>
+        <span class="crumb"><a href="posts">posts</a> / @(IsNew ? "new" : "edit")</span>
+        <h1>@(IsNew ? "New post" : "Edit post")</h1>
+    </div>
+    <div class="page-actions">
+        @if (_saved is not null)
+        {
+            <span class="badge @(_saved.StartsWith("error") ? "badge-err" : "badge-ok")">@_saved</span>
+        }
+        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="SaveAsync">
+            @(Busy ? "committing…" : IsNew ? "create post" : "save")
+        </button>
+        @if (!IsNew)
+        {
+            <button type="button" class="btn btn-danger" disabled="@Busy" @onclick="DeleteAsync">delete</button>
+        }
+        <a href="posts" class="btn">back</a>
+    </div>
+</div>
 
 @if (_loadError is not null)
 {
-    <p class="text-sm text-pomegranate font-mono mb-4">@_loadError</p>
+    <p class="notice notice-err mb-4">@_loadError</p>
 }
 
-<div class="grid lg:grid-cols-[1fr_20rem] gap-6 items-start">
-    <div class="flex flex-col gap-5 min-w-0">
-        <div class="grid sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
-                <label for="title" class="block mb-1.5">title</label>
-                <input id="title" class="w-full" @bind="_fm.Title" @bind:after="SyncSlug" />
-            </div>
-            <div>
-                <label for="slug" class="block mb-1.5">slug</label>
-                <input id="slug" class="w-full font-mono text-sm" @bind="_fm.Slug" @bind:after="SlugTouched" />
-            </div>
-            <div>
-                <label for="category" class="block mb-1.5">category</label>
-                <select id="category" class="w-full" @bind="_fm.Category">
-                    @foreach (var term in _categories)
-                    {
-                        <option value="@term.Slug">@term.Title</option>
-                    }
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <label for="desc" class="block mb-1.5">description</label>
-                <input id="desc" class="w-full" @bind="_fm.Description" />
-            </div>
-            <div class="sm:col-span-2">
-                <label for="tags" class="block mb-1.5">tags (comma separated, must exist in taxonomy)</label>
-                <input id="tags" class="w-full font-mono text-sm" value="@string.Join(", ", _fm.Tags)"
-                       @oninput="OnTagsChanged" />
-            </div>
-            <div>
-                <label for="published" class="block mb-1.5">published (utc)</label>
-                <input id="published" type="date" class="w-full" value="@_fm.Published.ToString("yyyy-MM-dd")" @oninput="OnPublishedChanged" />
-            </div>
-            <div class="flex items-end gap-6 pb-1">
-                <label class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg">
-                    <input type="checkbox" class="size-4" @bind="_fm.Draft" /> draft
-                </label>
-                <label class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg">
-                    <input type="checkbox" class="size-4" @bind="_fm.Featured" /> featured
-                </label>
-            </div>
+<div class="editor-layout">
+    <div class="editor-main">
+        <input id="title" class="input-title" placeholder="Post title" aria-label="post title"
+               @bind="_fm.Title" @bind:after="SyncSlug" />
+
+        <div class="editor-frame">
+            <div id="editor-host"></div>
         </div>
 
-        @if (_fm.Slug is { Length: > 0 })
-        {
-            <p class="title-block text-xs">preview parity: the markdown below renders through the same pipeline the generator uses.</p>
-        }
-        <div @ref="_editorHost" id="editor-host" class="border border-line rounded min-h-[28rem]"></div>
-
-        <div class="flex flex-wrap items-center gap-3">
-            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="SaveAsync">@(Busy ? "committing…" : IsNew ? "create post" : "save")</button>
-            @if (!IsNew)
-            {
-                <button type="button" class="btn text-pomegranate" disabled="@Busy" @onclick="DeleteAsync">delete</button>
-            }
-            <a href="posts" class="btn">back</a>
-            @if (_saved is not null)
-            {
-                <span class="font-mono text-xs text-accent">@_saved</span>
-            }
-        </div>
+        <p class="field-help">
+            Preview parity: the markdown above renders through the same pipeline the generator uses.
+            The right-hand pane is that render, so what you see is what ships.
+        </p>
     </div>
 
-    <aside class="card p-5 lg:sticky lg:top-20">
-        <h2 class="title-block mb-3">live preview</h2>
-        <div class="post-body text-sm max-h-[36rem] overflow-y-auto pe-2">@((MarkupString)_previewHtml)</div>
+    <aside class="editor-side">
+        <section class="card">
+            <p class="card-head">metadata</p>
+            <div class="card-body field-row">
+                <div class="field">
+                    <label for="slug">slug</label>
+                    <input id="slug" class="font-mono" @bind="_fm.Slug" @bind:after="SlugTouched" />
+                </div>
+                <div class="field">
+                    <label for="category">category</label>
+                    <select id="category" @bind="_fm.Category">
+                        @foreach (var term in _categories)
+                        {
+                            <option value="@term.Slug">@term.Title</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="desc">description</label>
+                    <input id="desc" @bind="_fm.Description" />
+                    <span class="field-help">60–163 characters; the audit gate enforces this.</span>
+                </div>
+                <div class="field">
+                    <label for="tags">tags</label>
+                    <input id="tags" class="font-mono" value="@string.Join(", ", _fm.Tags)" @oninput="OnTagsChanged" />
+                    <span class="field-help">comma separated, must exist in the taxonomy.</span>
+                </div>
+                <div class="field-2">
+                    <div class="field">
+                        <label for="published">published (utc)</label>
+                        <input id="published" type="date" value="@_fm.Published.ToString("yyyy-MM-dd")" @oninput="OnPublishedChanged" />
+                    </div>
+                    <div class="field">
+                        <label>flags</label>
+                        <label for="draft" class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg">
+                            <input id="draft" type="checkbox" @bind="_fm.Draft" /> draft
+                        </label>
+                        <label for="featured" class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg">
+                            <input id="featured" type="checkbox" @bind="_fm.Featured" /> featured
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <p class="card-head">live preview</p>
+            <div class="card-body post-body text-sm" style="max-height:32rem;overflow-y:auto">
+                @((MarkupString)_previewHtml)
+            </div>
+        </section>
     </aside>
 </div>
 

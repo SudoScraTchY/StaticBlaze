@@ -9,7 +9,7 @@
     <div class="card p-6 sm:p-8">
         @if (Error is not null)
         {
-            <p class="text-sm text-pomegranate mb-4 font-mono">@Error</p>
+            <p class="notice notice-err mb-4" role="alert">@Error</p>
         }
 
         @if (!HasVault)

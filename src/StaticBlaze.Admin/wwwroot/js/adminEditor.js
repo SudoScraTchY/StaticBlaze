@@ -1,14 +1,27 @@
-// Toast UI Editor bridge: lazily loads the editor from CDN on first use,
-// streams markdown changes to Blazor, and pipes pasted images through the
-// .NET media service (SHA-256 names, ImageSharp-free - bytes go up as-is).
+// Toast UI Editor bridge.
+//
+// The library is VENDORED (see wwwroot/vendor/toastui/README.md). It used to load from
+// uicdn.toast.com/editor/latest, which meant the CDN could change the editor under the app,
+// the editor could not load offline, and — the reason the vendoring happened — the CDN has no
+// dark theme stylesheet at any version, so `theme: 'dark'` silently did nothing and a dark
+// shell rendered a light editor with its own grey text.
+//
+// The editor is therefore always initialised with Toast UI's light baseline, and
+// styles/admin.css overrides every surface, text and control colour from the admin tokens for
+// both themes. That also means switching the app theme does NOT need to re-create the editor.
+//
+// Responsibilities kept from before: stream markdown changes to Blazor, pipe pasted images
+// through the .NET media service.
 
-async function loadScript(src) {
-  if (document.querySelector(`script[src="${src}"]`)) return;
-  await new Promise((resolve, reject) => {
+const VENDOR = './vendor/toastui/';
+
+function loadScript(src) {
+  if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
+  return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = src;
     script.onload = resolve;
-    script.onerror = reject;
+    script.onerror = () => reject(new Error(`failed to load ${src}`));
     document.head.appendChild(script);
   });
 }
@@ -22,10 +35,10 @@ function loadCSS(href) {
 }
 
 export async function initEditor(element, dotNetRef, initialMarkdown) {
-  loadCSS('https://uicdn.toast.com/editor/latest/toastui-editor.min.css');
-  loadCSS('https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight.min.css');
-  await loadScript('https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js');
-  await loadScript('https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight-all.min.js');
+  loadCSS(`${VENDOR}toastui-editor.min.css`);
+  loadCSS(`${VENDOR}toastui-editor-plugin-code-syntax-highlight.min.css`);
+  await loadScript(`${VENDOR}toastui-editor-all.min.js`);
+  await loadScript(`${VENDOR}toastui-editor-plugin-code-syntax-highlight-all.min.js`);
 
   element.innerHTML = '';
 
@@ -38,11 +51,19 @@ export async function initEditor(element, dotNetRef, initialMarkdown) {
     initialEditType: 'markdown',
     previewStyle: 'tab',
     height: 'auto',
-    minHeight: '420px',
+    minHeight: '460px',
     usageStatistics: false,
     language: 'en',
     plugins: [codeSyntaxHighlight],
-    theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+    // light is the baseline; both themes are re-coloured by admin.css from the shared tokens
+    theme: 'light',
+    toolbarItems: [
+      ['heading', 'bold', 'italic', 'strike'],
+      ['hr', 'quote'],
+      ['ul', 'ol', 'task'],
+      ['table', 'image', 'link'],
+      ['code', 'codeblock'],
+    ],
     events: {
       change: () => dotNetRef.invokeMethodAsync('OnMarkdownChangedAsync', editor.getMarkdown()),
     },
@@ -55,8 +76,12 @@ export async function initEditor(element, dotNetRef, initialMarkdown) {
     },
   });
 
+  // exposed for the harness and for debugging; harmless in production
+  window.__sbEditor = editor;
+
   return {
-    destroy: () => editor.destroy(),
+    destroy: () => { try { editor.destroy(); } catch { /* already gone */ } delete window.__sbEditor; },
     setMarkdown: (markdown) => editor.setMarkdown(markdown, false),
+    getMarkdown: () => editor.getMarkdown(),
   };
 }

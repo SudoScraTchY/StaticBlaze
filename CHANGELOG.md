@@ -2,6 +2,35 @@
 
 Notable changes to StaticBlaze, newest first. Dates are the merge date on `main`.
 
+## 2026-09-29 — Admin redesign: light theme, readable editor, real workspace
+
+**Theme layer**
+- New `styles/_admin-tokens.css`: light (default) and dark defined once, aliased onto the site's
+  older token names, with the eight Tailwind `--color-*` keys the admin markup used but the theme
+  never defined (`bg-bg`, `text-fg`, `text-muted`, `border-line`, `text-gold`, `text-pomegranate`,
+  `bg-surface`, `divide-line-soft`). Those utilities generated nothing before, which is why the
+  shell rendered with inherited colours.
+- Theme switch in the admin header (visible before sign-in too), persisted under `sb-theme`,
+  restored before first paint, and unaffected by the lock/unlock cycle.
+
+**Editor**
+- Toast UI Editor vendored (editor 3.2.2, plugin 3.0.0, MIT). The CDN build has no dark theme
+  stylesheet at any version, so `theme: 'dark'` did nothing and the light editor's `#222` text
+  landed on a dark ground: 1.26:1. The editor is now always initialised light and fully
+  re-coloured from the admin tokens for both themes; source text measures 15.4:1 in dark.
+- Markdown mode is ProseMirror (not CodeMirror) — the overrides target the real class names.
+
+**Layout**
+- The shell is fluid: the editor workspace went from a 1024px cap to the full viewport
+  (2136px editor frame at 2560px), with a 140ch source measure and a 76ch rendered measure.
+- `PostEdit` rebuilt: title across the working column, editor below it, metadata and the parity
+  preview in a side panel, and the save/delete actions in the page header.
+- `#app` no longer carries the loading placeholder's flex/centering classes, which had been
+  shrinking the entire admin to a centered column.
+
+**Docs**
+- `docs/13-admin-design.md`, `docs/prototypes/admin-style-harness.html`, vendor README with
+  provenance, and this entry.
 ## 2026-09-28 — Interaction and content pass
 
 **Home**

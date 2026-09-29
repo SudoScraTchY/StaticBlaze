@@ -321,6 +321,7 @@ Full detail: `docs/09-deep-field-handoff.md`.
 | `docs/10-design-changes.md` | how to change the design, manually and via an agent |
 | `docs/11-agent-ui-context.md` | per-page feature inventory for an AI agent (design-direction placeholder) |
 | `docs/12-contact-endpoint.md` | how the contact form stores messages: receiver, deployment, guards |
+| `docs/13-admin-design.md` | admin theme layer, editor, layout rules, QA checklist |
 | `CHANGELOG.md` | what changed, newest first |
 
 ## Status
@@ -338,5 +339,6 @@ Full detail: `docs/09-deep-field-handoff.md`.
 - [x] Comments via GitHub Discussions (giscus), config-driven, off until configured
 - [x] Deployment: Actions → OIDC → Pages, no PAT, post-deploy live verification in the workflow
 - [x] Admin: encrypted vault, SHA-aware GitHub client, Toast UI editor, SkiaSharp media pipeline
+- [x] Admin design system: light (default) + dark themes from one token layer, vendored editor, fluid workspace shell
 - [x] Tests: 27 passing - Core unit tests plus golden-file HTML tests that pin the template markup contract
 - [ ] Real analytics, custom domain - see `docs/06-analytics-feasibility.md` and `docs/10-design-changes.md`

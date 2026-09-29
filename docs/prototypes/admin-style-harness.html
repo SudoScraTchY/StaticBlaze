@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StaticBlaze admin · style guide &amp; harness</title>
+
+<!--
+  Admin style guide and verification harness.
+
+  It renders the real admin markup against the real built stylesheet and the real vendored
+  editor, so it can be used to
+    - review every component in both themes without signing in,
+    - measure contrast and geometry in an automated pass,
+    - document the design system (this file is also the visual half of docs/13-admin-design.md).
+
+  Paths: the first stylesheet is for a local copy dropped next to this file; the second is the
+  repo path, so opening it straight from the repository works with no setup. Browsers load both
+  and the later one wins.
+-->
+<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="../../src/StaticBlaze.Admin/wwwroot/assets/admin.css">
+<style>
+  .sg-note { font-family: ui-monospace, monospace; font-size: 12px; color: #8b93a8; padding: 6px 0; }
+  .sg-bar { position: sticky; top: 0; z-index: 60; display: flex; gap: .5rem; align-items: center; justify-content: flex-end;
+            padding: .5rem clamp(1rem,2.2vw,2.5rem); background: color-mix(in oklab, var(--bg) 92%, transparent);
+            border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); }
+  .sg-section { margin-block: 2.5rem 0; }
+  .sg-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+</style>
+</head>
+<body class="bg-bg text-fg font-sans min-h-screen antialiased">
+
+<div class="sg-bar">
+  <span class="sg-note">style guide &amp; harness · <span id="themeName">light</span></span>
+  <div class="theme-switch" role="group" aria-label="colour theme">
+    <button type="button" id="toLight" aria-pressed="true">light</button>
+    <button type="button" id="toDark" aria-pressed="false">dark</button>
+  </div>
+</div>
+
+<div class="admin-shell">
+  <!-- ============================ 1. shell ============================ -->
+  <header class="admin-header">
+    <div class="admin-header-in">
+      <div class="flex items-center">
+        <a href="#" class="admin-brand" aria-label="back to site">
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M12 2.5 20.2 7.25v9.5L12 21.5 3.8 16.75v-9.5L12 2.5Z" />
+            <path d="M12 7.5 16 9.75v4.5L12 16.5 8 14.25v-4.5L12 7.5Z" />
+          </svg>
+          <span class="admin-brand-label">admin</span>
+        </a>
+        <nav class="admin-nav" aria-label="admin">
+          <a href="#">dashboard</a><a href="#" class="active">posts</a><a href="#">media</a><a href="#">settings</a>
+        </nav>
+      </div>
+      <div class="admin-header-actions">
+        <span class="admin-identity hidden sm:inline">@@SudoScraTchY</span>
+        <button type="button" class="btn btn-sm">lock</button>
+      </div>
+    </div>
+    <div class="tile-rule" aria-hidden="true"></div>
+  </header>
+
+  <main class="admin-main">
+
+    <!-- ========================= 2. page head ========================= -->
+    <div class="page-head">
+      <div>
+        <span class="crumb"><a href="#">posts</a> / edit</span>
+        <h1>Edit post</h1>
+      </div>
+      <div class="page-actions">
+        <span class="badge badge-ok">saved · 21:04:12</span>
+        <button type="button" class="btn btn-primary">save</button>
+        <button type="button" class="btn btn-danger">delete</button>
+        <a href="#" class="btn">back</a>
+      </div>
+    </div>
+
+    <!-- ========================== 3. editor =========================== -->
+    <div class="editor-layout">
+      <div class="editor-main">
+        <input id="title" class="input-title" value="Every Mermaid Diagram, Rendered Live" aria-label="post title">
+        <div class="editor-frame"><div id="editor-host"></div></div>
+        <p class="field-help">Preview parity: the markdown above renders through the same pipeline the generator uses.</p>
+      </div>
+
+      <aside class="editor-side">
+        <section class="card">
+          <p class="card-head">metadata</p>
+          <div class="card-body field-row">
+            <div class="field"><label for="slug">slug</label><input id="slug" class="font-mono" value="mermaid-capability-check"></div>
+            <div class="field"><label for="category">category</label><select id="category"><option>meta</option><option>engineering</option></select></div>
+            <div class="field">
+              <label for="desc">description</label>
+              <input id="desc" value="A full capability check of the mermaid pipeline.">
+              <span class="field-help">60–163 characters; the audit gate enforces this.</span>
+            </div>
+            <div class="field">
+              <label for="tags">tags</label>
+              <input id="tags" class="font-mono" value="markdown, testing">
+              <span class="field-help">comma separated, must exist in the taxonomy.</span>
+            </div>
+            <div class="field-2">
+              <div class="field"><label for="published">published (utc)</label><input id="published" type="date" value="2026-09-28"></div>
+              <div class="field">
+                <label>flags</label>
+                <label class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg" for="draft"><input id="draft" type="checkbox"> draft</label>
+                <label class="flex items-center gap-2 normal-case tracking-normal text-sm text-fg" for="feat"><input id="feat" type="checkbox" checked> featured</label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <p class="card-head">live preview</p>
+          <div class="card-body post-body text-sm" style="max-height:28rem;overflow-y:auto">
+            <h2>Mermaid, live</h2>
+            <p>The pipeline rewrites every fence into a diagram. This paragraph exists so the preview has body copy to measure.</p>
+            <pre><code>flowchart LR
+  A[push] --> B[build]</code></pre>
+            <ul><li>renders client-side</li><li>themed from tokens</li></ul>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ======================= 4. components ========================== -->
+    <section class="sg-section">
+      <div class="page-head"><div><span class="crumb">admin / style guide</span><h1>Components</h1></div></div>
+
+      <div class="sg-grid">
+        <div class="card">
+          <p class="card-head">buttons</p>
+          <div class="card-body flex flex-wrap gap-2">
+            <button type="button" class="btn btn-primary">primary</button>
+            <button type="button" class="btn">secondary</button>
+            <button type="button" class="btn btn-danger">danger</button>
+            <button type="button" class="btn btn-sm">small</button>
+            <button type="button" class="btn" disabled>disabled</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-head">fields</p>
+          <div class="card-body field-row">
+            <div class="field"><label for="c-input">input</label><input id="c-input" value="value"></div>
+            <div class="field"><label for="c-ph">placeholder</label><input id="c-ph" placeholder="filter by title, slug or tag…"></div>
+            <div class="field"><label for="c-err">with error</label><input id="c-err" value="bad" aria-invalid="true"><span class="field-err">passphrase min 8 characters</span></div>
+            <div class="field"><label for="c-dis">disabled</label><input id="c-dis" value="read only" disabled></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-head">badges &amp; notices</p>
+          <div class="card-body field-row">
+            <div class="flex flex-wrap gap-2">
+              <span class="badge">featured</span>
+              <span class="badge badge-draft">draft</span>
+              <span class="badge badge-ok">saved</span>
+              <span class="badge badge-err">failed</span>
+            </div>
+            <p class="notice">Neutral notice: something informative about the current state.</p>
+            <p class="notice notice-ok">Saved. The generator will pick this up on the next build.</p>
+            <p class="notice notice-err" role="alert">error: token cannot access the configured repository.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-head">table</p>
+          <div class="card-body">
+            <table class="admin">
+              <thead><tr><th>date</th><th>post</th><th>state</th></tr></thead>
+              <tbody>
+                <tr><td class="font-mono text-xs">2026-09-28</td><td>Deployed from a Workflow</td><td><span class="badge badge-ok">live</span></td></tr>
+                <tr><td class="font-mono text-xs">2026-09-27</td><td>The shape of it</td><td><span class="badge badge-draft">draft</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <p class="card-head">rows (post list pattern)</p>
+        <ul class="rows">
+          <li><a href="#" class="row"><span class="row-date">2026-09-28</span><span class="row-title">Every Mermaid Diagram, Rendered Live</span><span class="badge">featured</span><span class="row-tags">#markdown #testing</span></a></li>
+          <li><a href="#" class="row"><span class="row-date">2026-09-27</span><span class="row-title">Deployed from a Workflow: This Post Is the Test</span><span class="row-tags">#github #deployment</span></a></li>
+          <li><a href="#" class="row"><span class="row-date">2026-08-15</span><span class="row-title">Persian Palette for Engineers</span><span class="badge badge-draft">draft</span><span class="row-tags">#design</span></a></li>
+        </ul>
+        <p class="empty">No posts match “draft”.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="admin-footer">
+    <span>StaticBlaze admin · GitHub is the database</span>
+    <span>theme: <span id="themeName2">light</span> · saved in this browser</span>
+  </footer>
+</div>
+
+<script>
+  // mirrors adminTheme.js so the harness behaves like the app
+  const KEY = 'sb-theme';
+  const apply = (t) => {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeName').textContent = t;
+    document.getElementById('themeName2').textContent = t;
+    document.getElementById('toLight').setAttribute('aria-pressed', String(t === 'light'));
+    document.getElementById('toDark').setAttribute('aria-pressed', String(t === 'dark'));
+    try { localStorage.setItem(KEY, t); } catch {}
+  };
+  document.getElementById('toLight').addEventListener('click', () => apply('light'));
+  document.getElementById('toDark').addEventListener('click', () => apply('dark'));
+  try { const s = localStorage.getItem(KEY); if (s === 'dark' || s === 'light') apply(s); } catch {}
+</script>
+
+<script>
+  // load the vendored editor: local copy first, repo path second
+  async function firstAvailable(paths) {
+    for (const p of paths) {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = p; s.onload = res; s.onerror = () => rej(new Error(p));
+          document.head.appendChild(s);
+        });
+        return p;
+      } catch { /* try next */ }
+    }
+    return null;
+  }
+  (async () => {
+    const base = ['vendor/toastui/', '../../src/StaticBlaze.Admin/wwwroot/vendor/toastui/'];
+    for (const b of base) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet'; link.href = b + 'toastui-editor.min.css';
+      document.head.appendChild(link);
+      const link2 = document.createElement('link');
+      link2.rel = 'stylesheet'; link2.href = b + 'toastui-editor-plugin-code-syntax-highlight.min.css';
+      document.head.appendChild(link2);
+    }
+    const jsBase = await firstAvailable(base.map((b) => b + 'toastui-editor-all.min.js'));
+    if (!jsBase) { document.getElementById('editor-host').textContent = 'editor bundle not found'; return; }
+    await firstAvailable(base.map((b) => b + 'toastui-editor-plugin-code-syntax-highlight-all.min.js'));
+    const { Editor } = window.toastui;
+    const { codeSyntaxHighlight } = window.toastui.Editor.plugin;
+    window.__editor = new Editor({
+      el: document.getElementById('editor-host'),
+      initialValue: '# Every Mermaid Diagram\n\nThis is the editor body text. It has to be readable in both themes, at a\ncomfortable line length, with `inline code` and links.\n\n```mermaid\nflowchart LR\n  A[push] --> B[build]\n```\n\n- a list item\n- another one\n',
+      initialEditType: 'markdown',
+      previewStyle: 'tab',
+      height: 'auto',
+      minHeight: '420px',
+      usageStatistics: false,
+      language: 'en',
+      plugins: [codeSyntaxHighlight],
+      theme: 'light',
+    });
+  })();
+</script>
+</body>
+</html>

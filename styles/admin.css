@@ -1,68 +1,437 @@
-/* Admin app. Same Deep Field tokens as the published site, so the authoring surface reads as the
-   same instrument. Import tailwind from the pinned toolchain so local and CI resolve identically. */
+/* Admin app.
+   Theme layer: _admin-tokens.css (light default + dark, one source of truth).
+   Fonts, type scale and motion come from the shared site tokens; surfaces, ink,
+   lines, accent, semantic colours and control sizes come from the admin layer.
+
+   Structure of this file
+     1. base              html, focus, selection, scrollbars
+     2. shell             header, nav, page head, main, footer
+     3. components        buttons, fields, cards, rows, badges, notices, empty
+     4. editor            post editor layout, title, side panels
+     5. toast ui          the vendored editor re-coloured from the tokens
+     6. preview           .post-body typography for the parity preview
+     7. motion            reduced motion
+*/
 @import "../tools/node-tools/node_modules/tailwindcss/index.css";
 @import "./_tokens.css";
+@import "./_admin-tokens.css";
 
 @source "../src/StaticBlaze.Admin";
 
+/* ------------------------------------------------------------------ 1. base */
 @layer base {
   html {
-    background: var(--ground);
-    color: var(--ink);
+    background: var(--bg);
+    color: var(--fg);
     font-family: var(--family-sans);
+    font-size: 15px;               /* admin body size: comfortable, not website-large */
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
+  body { background: var(--bg); color: var(--fg); }
   :lang(fa), :lang(ar), :lang(he), :lang(ur) { font-family: var(--family-persian); letter-spacing: 0 !important; }
-  ::selection { background: var(--accent); color: var(--ground); }
-  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--r-1); }
+  ::selection { background: var(--accent-soft); color: var(--fg); }
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--r-1);
+  }
   button, input, textarea, select { border-radius: var(--r-2); }
+  h1, h2, h3 { letter-spacing: -0.01em; }
+  a { color: var(--accent); }
+  a:hover { color: var(--accent-ink); }
+  hr { border-color: var(--line); }
+
+  /* scrollbars follow the theme instead of staying OS-bright */
+  * { scrollbar-color: var(--line-hi) transparent; scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 6px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-track { background: transparent; }
 }
 
+/* --------------------------------------------------------------- 2. shell */
+.admin-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+.admin-header {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.admin-header-in {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  height: 3.5rem;
+  padding-inline: var(--spacing-gutter);
+  max-width: none;                       /* the shell is fluid: the editor needs the width */
+}
+.admin-brand { display: flex; align-items: center; gap: 0.625rem; color: var(--fg); text-decoration: none; }
+.admin-brand:hover { color: var(--accent); }
+.admin-brand svg { color: var(--accent); }
+.admin-brand-label {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+}
+.admin-nav { display: flex; align-items: center; gap: 0.35rem; margin-inline-start: 1rem; }
+.admin-nav a {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none;
+  padding: 0.45rem 0.7rem; border-radius: var(--r-2);
+  border: 1px solid transparent;
+}
+.admin-nav a:hover { color: var(--fg); background: var(--surface-2); }
+.admin-nav a.active { color: var(--accent); border-color: var(--line); background: var(--accent-soft); }
+.admin-header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.admin-identity { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--muted); }
+
+.admin-main {
+  flex: 1; width: 100%; max-width: none;
+  padding: 1.75rem var(--spacing-gutter) 4rem;
+}
+
+.admin-footer {
+  border-top: 1px solid var(--line);
+  padding: 0.9rem var(--spacing-gutter);
+  font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--muted);
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+
+/* page header: title on the left, actions on the right, sticky so save is always reachable */
+.page-head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-block-end: 1rem; margin-block-end: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.page-head h1 { font-size: var(--fs-lg); font-weight: 600; margin: 0; }
+.page-head .crumb {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--faint); display: block; margin-block-end: 0.35rem;
+}
+.page-head .crumb a { color: var(--muted); text-decoration: none; }
+.page-head .crumb a:hover { color: var(--accent); }
+.page-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+/* the theme switch: a two-state segmented control, keyboard operable, label always visible */
+.theme-switch {
+  display: inline-flex; align-items: center; gap: 0.15rem;
+  padding: 0.15rem; border: 1px solid var(--line); border-radius: var(--r-2);
+  background: var(--surface-2);
+}
+.theme-switch button {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+  border: 0; background: transparent; cursor: pointer;
+  padding: 0.35rem 0.6rem; border-radius: calc(var(--r-2) - 1px);
+  display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.theme-switch button:hover { color: var(--fg); }
+.theme-switch button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: var(--el-1); }
+.theme-switch svg { width: 0.9rem; height: 0.9rem; }
+
+/* ---------------------------------------------------------- 3. components */
 .section-label {
-  display: inline-flex; align-items: center; gap: 0.6rem;
+  display: inline-flex; align-items: center; gap: 0.6rem; width: 100%;
   font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
-  letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
 }
-.section-label::before { content: attr(data-n); color: var(--zafaran); }
-.section-label::after { content: ""; flex: 1; height: 1px; background: var(--edge-2); }
+.section-label::before { content: attr(data-n); color: var(--gold); }
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
-.title-block { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--ink-faint); letter-spacing: 0.08em; }
-.tile-rule { height: 1px; background: linear-gradient(90deg, var(--lajvard), var(--accent), transparent); }
+.title-block { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--faint); letter-spacing: 0.08em; }
+.tile-rule { height: 2px; background: linear-gradient(90deg, var(--accent), color-mix(in oklab, var(--accent) 40%, transparent), transparent); }
 
-/* legacy aliases so the existing admin pages keep resolving against the new palette */
-:root { --bg: var(--ground); --surface: var(--panel); --fg: var(--ink); --muted: var(--ink-dim);
-        --line: var(--edge-2); --line-soft: var(--edge); --accent-soft: var(--accent-soft); --gold: var(--zafaran); }
-
-input, textarea, select {
-  background: var(--ground-2);
-  border: 1px solid var(--edge-2);
-  color: var(--ink);
-  padding: 0.6rem 0.8rem;
-  font-size: var(--fs-sm);
-  min-height: 44px;
-}
-input::placeholder, textarea::placeholder { color: var(--ink-faint); }
-input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
-label {
-  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim);
-}
-
+/* buttons: one height scale, one radius, visible focus, disabled stays readable */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-  min-height: 44px; padding-inline: 1.1rem;
+  min-height: 2.5rem; padding-inline: 1rem;
   font-family: var(--family-mono); font-size: var(--fs-xs); font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  border: 1px solid var(--edge-2); background: transparent; color: var(--ink); cursor: pointer;
-  transition: color var(--d-2) var(--e-out), border-color var(--d-2) var(--e-out), background-color var(--d-2) var(--e-out);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background-color var(--d-2) var(--e-out), border-color var(--d-2) var(--e-out), color var(--d-2) var(--e-out);
 }
-.btn:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--ground); }
-.btn-primary:hover:not(:disabled) { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--ground); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme="dark"] .btn-primary { color: #06130f; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
+:root[data-theme="dark"] .btn-primary:hover:not(:disabled) { color: #06130f; }
+.btn-danger { color: var(--pomegranate); border-color: var(--line); }
+.btn-danger:hover:not(:disabled) { border-color: var(--pomegranate); color: var(--pomegranate); background: color-mix(in oklab, var(--pomegranate) 10%, transparent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-sm { min-height: 2rem; padding-inline: 0.7rem; font-size: var(--fs-2xs); }
 
-.card { background: var(--panel); border: 1px solid var(--edge); border-radius: var(--r-3); }
+/* fields */
+.field { display: grid; gap: 0.4rem; }
+.field-label, label {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+}
+input, textarea, select {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 0.55rem 0.7rem;
+  font-size: var(--fs-sm);
+  min-height: 2.5rem;
+  width: 100%;
+}
+input::placeholder, textarea::placeholder { color: var(--faint); }
+input:hover:not(:disabled), textarea:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--line-hi); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+input:disabled, textarea:disabled, select:disabled { background: var(--surface-2); color: var(--faint); cursor: not-allowed; }
+.field-help { font-size: var(--fs-2xs); color: var(--faint); }
+.field-err { font-size: var(--fs-2xs); color: var(--pomegranate); }
+input[type="checkbox"] { width: 1rem; height: 1rem; min-height: 0; accent-color: var(--accent); }
+select { background-image: none; }
 
+/* the title field is the one oversized control: it is the post's identity */
+.input-title {
+  font-family: var(--family-sans); font-size: var(--fs-xl); font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.15;
+  padding: 0.5rem 0.25rem; border: 0; border-bottom: 2px solid var(--line);
+  background: transparent; border-radius: 0;
+}
+.input-title:hover { border-color: var(--line-hi); }
+.input-title:focus { box-shadow: none; border-color: var(--accent); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); box-shadow: var(--el-1); }
+.card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line);
+  font-family: var(--family-mono); font-size: var(--fs-2xs); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.card-body { padding: 0.9rem; }
+
+.rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.rows > li { border-bottom: 1px solid var(--line); }
+.row {
+  display: flex; align-items: baseline; gap: 1rem;
+  padding: 0.7rem 0.75rem; text-decoration: none; color: var(--fg);
+}
+.row:hover { background: var(--accent-soft); }
+.row:hover .row-title { color: var(--accent); }
+.row-date { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--faint); width: 6rem; flex-shrink: 0; }
+.row-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-tags { font-family: var(--family-mono); font-size: var(--fs-2xs); color: var(--faint); margin-inline-start: auto; }
+
+.badge {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: var(--r-1);
+  border: 1px solid var(--line); color: var(--muted); background: var(--surface-2);
+}
+.badge-draft { color: var(--gold); border-color: color-mix(in oklab, var(--gold) 45%, transparent); background: var(--gold-soft); }
+.badge-ok { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 45%, transparent); }
+.badge-err { color: var(--pomegranate); border-color: color-mix(in oklab, var(--pomegranate) 45%, transparent); }
+
+.notice {
+  display: flex; gap: 0.6rem; align-items: flex-start;
+  padding: 0.7rem 0.85rem; border-radius: var(--r-2);
+  border: 1px solid var(--line); background: var(--surface-2);
+  font-size: var(--fs-sm); color: var(--muted);
+}
+.notice-err { border-color: color-mix(in oklab, var(--pomegranate) 45%, transparent); color: var(--pomegranate); background: color-mix(in oklab, var(--pomegranate) 8%, var(--surface)); }
+.notice-ok { border-color: color-mix(in oklab, var(--ok) 45%, transparent); color: var(--ok); background: color-mix(in oklab, var(--ok) 8%, var(--surface)); }
+
+.empty { padding: 2rem 1rem; text-align: center; color: var(--faint); font-size: var(--fs-sm); }
+
+table.admin { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+table.admin th {
+  text-align: start; font-family: var(--family-mono); font-size: var(--fs-2xs);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line);
+}
+table.admin td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line-soft); }
+
+/* ------------------------------------------------------------- 4. editor */
+/* The post editor is the one page that owns the full width: a wide working column and a
+   fixed side panel, with the reading measure applied INSIDE the column, not to the column. */
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (max-width: 1100px) { .editor-layout { grid-template-columns: minmax(0, 1fr); } }
+
+.editor-main { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+.editor-frame {
+  border: 1px solid var(--line); border-radius: var(--r-3); overflow: hidden;
+  background: var(--ed-bg);
+  box-shadow: var(--el-1);
+}
+.editor-frame:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.editor-side { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 4.5rem; }
+@media (max-width: 1100px) { .editor-side { position: static; } }
+
+.field-row { display: grid; gap: 0.75rem; }
+.field-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* ----------------------------------------------------------- 5. toast ui */
+/* The vendored editor ships one light theme, and the CDN has no dark one (that is the bug this
+   section exists to fix). Every colour below is re-derived from the admin tokens, so both app
+   themes are correct and switching themes needs no editor re-init.
+
+   Two things worth knowing about the vendored build (3.2.2):
+     - markdown mode is ProseMirror, NOT CodeMirror: the source pane is `.ProseMirror` inside
+       `.toastui-editor-md-container`, with markdown-specific span classes for syntax marks.
+     - the mode tabs live in `.toastui-editor-md-tab-container`, not `.toastui-editor-mode-switch`.
+   Structure, in order: frame, toolbar, tabs, source pane, syntax marks, rendered content,
+   popups and tooltips. */
+.toastui-editor-defaultUI {
+  border: 0 !important;
+  background: var(--ed-bg);
+  color: var(--ed-fg);
+  font-family: var(--family-sans);
+}
+.toastui-editor-defaultUI-toolbar {
+  background: var(--ed-toolbar) !important;
+  border-bottom: 1px solid var(--ed-border) !important;
+  padding: 0.35rem 0.5rem !important;
+}
+.toastui-editor-toolbar-divider { background: var(--ed-border) !important; }
+.toastui-editor-toolbar-icons {
+  border: 1px solid transparent !important;
+  border-radius: var(--r-2);
+}
+.toastui-editor-toolbar-icons:not(:disabled):hover { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+.toastui-editor-toolbar-icons:focus-visible { outline: 2px solid var(--focus) !important; outline-offset: 1px; }
+/* the icon sprite is a dark-grey image; invert it for the dark theme so it stays >= 3:1 */
+:root[data-theme="dark"] .toastui-editor-toolbar-icons { filter: invert(1) opacity(0.88); }
+
+/* mode tabs (Markdown / WYSIWYG) */
+.toastui-editor-md-tab-container { background: var(--ed-toolbar) !important; border-bottom: 1px solid var(--ed-border) !important; }
+.toastui-editor-md-tab-container .tab-item { color: var(--ed-fg-muted) !important; border-color: transparent !important; }
+.toastui-editor-md-tab-container .tab-item.active { color: var(--ed-fg) !important; border-color: var(--ed-fg) !important; }
+.toastui-editor-mode-switch { background: var(--ed-toolbar) !important; border-top: 1px solid var(--ed-border) !important; }
+.toastui-editor-mode-switch .tab-item { color: var(--ed-fg-muted) !important; }
+.toastui-editor-mode-switch .tab-item.active { color: var(--ed-fg) !important; }
+
+/* panes */
+.toastui-editor-main, .toastui-editor-md-container, .toastui-editor-ww-container, .toastui-editor-ww-container .toastui-editor-contents {
+  background: var(--ed-bg) !important;
+  color: var(--ed-fg) !important;
+}
+.toastui-editor-md-splitter { background: var(--ed-border) !important; }
+
+/* markdown source pane (ProseMirror) */
+.toastui-editor-md-container .ProseMirror {
+  background: var(--ed-bg) !important;
+  color: var(--ed-fg) !important;
+  font-family: var(--family-mono) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.75 !important;
+  padding: 1rem 1.15rem !important;
+  caret-color: var(--accent);
+  /* the source pane follows the full width of the editor frame up to a generous 140ch, so it is
+     only bounded on very wide monitors (>= ~1900px of editor). Long lines are still comfortable
+     for tables and code, and the frame itself always spans the workspace. */
+  max-width: min(100%, 140ch);
+  margin-inline: auto;
+}
+.toastui-editor-md-container .ProseMirror p { color: var(--ed-fg) !important; }
+.toastui-editor-md-container .ProseMirror ::selection { background: color-mix(in oklab, var(--accent) 26%, transparent) !important; }
+.toastui-editor-md-container .ProseMirror-focused { outline: none !important; }
+
+/* markdown syntax marks: readable, never washed out */
+.toastui-editor-md-heading { color: var(--ed-fg) !important; font-weight: 700; }
+.toastui-editor-md-delimiter { color: var(--ed-fg-muted) !important; }
+.toastui-editor-md-meta { color: var(--ed-fg-muted) !important; }
+.toastui-editor-md-code, .toastui-editor-md-code-block, .toastui-editor-md-code-block-line-background {
+  color: var(--accent) !important;
+  background: var(--ed-code-bg) !important;
+}
+.toastui-editor-md-marked-text { color: var(--ed-fg) !important; background: color-mix(in oklab, var(--accent) 14%, transparent) !important; }
+.toastui-editor-md-link, .toastui-editor-md-link-url, .toastui-editor-md-link-desc { color: var(--accent) !important; }
+.toastui-editor-md-block-quote { color: var(--ed-fg-muted) !important; border-inline-start: 3px solid var(--accent) !important; }
+.toastui-editor-md-hr { border-color: var(--ed-border) !important; }
+/* the empty-editor hint */
+.toastui-editor-md-container .ProseMirror .placeholder::before,
+.toastui-editor-md-container .placeholder { color: var(--ed-fg-muted) !important; }
+
+/* the rendered content: reading measure, rhythm, code, quotes, tables */
+.toastui-editor-contents {
+  font-family: var(--family-sans) !important;
+  font-size: 1rem !important;
+  line-height: 1.7 !important;
+  color: var(--ed-fg) !important;
+  max-width: var(--spacing-read);
+  margin-inline: auto;
+}
+.toastui-editor-contents p { color: var(--ed-fg) !important; }
+.toastui-editor-contents h1, .toastui-editor-contents h2, .toastui-editor-contents h3,
+.toastui-editor-contents h4, .toastui-editor-contents h5, .toastui-editor-contents h6 {
+  color: var(--ed-fg) !important; border-bottom-color: var(--ed-border) !important;
+}
+.toastui-editor-contents a { color: var(--accent) !important; }
+.toastui-editor-contents strong { color: var(--ed-fg) !important; }
+.toastui-editor-contents code {
+  background: var(--ed-code-bg) !important; color: var(--ed-fg) !important;
+  border: 1px solid var(--ed-border) !important; border-radius: var(--r-1) !important;
+  font-family: var(--family-mono) !important; font-size: 0.875em !important;
+}
+.toastui-editor-contents pre {
+  background: var(--ed-code-bg) !important; border: 1px solid var(--ed-border) !important;
+  border-radius: var(--r-2) !important;
+}
+.toastui-editor-contents pre code { background: transparent !important; border: 0 !important; }
+.toastui-editor-contents blockquote {
+  border-inline-start: 3px solid var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--ed-fg-muted) !important;
+}
+.toastui-editor-contents table th, .toastui-editor-contents table td {
+  border-color: var(--ed-border) !important; color: var(--ed-fg) !important;
+}
+.toastui-editor-contents table th { background: var(--ed-gutter) !important; }
+.toastui-editor-contents hr { border-color: var(--ed-border) !important; }
+.toastui-editor-contents ul, .toastui-editor-contents ol { color: var(--ed-fg) !important; }
+.toastui-editor-contents li::marker { color: var(--ed-fg-muted); }
+.toastui-editor-contents .token.comment, .toastui-editor-contents .token.prolog { color: var(--ed-fg-muted) !important; }
+.toastui-editor-contents .token.punctuation { color: var(--ed-fg) !important; }
+
+/* popups, dropdowns, tooltips share the admin surfaces */
+.toastui-editor-popup { background: var(--surface) !important; border: 1px solid var(--line) !important; border-radius: var(--r-2) !important; box-shadow: var(--el-2) !important; }
+.toastui-editor-popup-body { background: var(--surface) !important; color: var(--fg) !important; }
+.toastui-editor-popup-body label { color: var(--muted) !important; }
+.toastui-editor-popup-body input, .toastui-editor-popup-body select { background: var(--surface) !important; border: 1px solid var(--line) !important; color: var(--fg) !important; }
+.toastui-editor-popup-add-heading ul li, .toastui-editor-popup-add-image .toastui-editor-tabs { background: var(--surface) !important; color: var(--fg) !important; }
+.toastui-editor-popup-add-heading ul li:hover { background: var(--accent-soft) !important; }
+.toastui-editor-dropdown-toolbar { background: var(--surface) !important; border: 1px solid var(--line) !important; box-shadow: var(--el-2) !important; }
+.toastui-editor-tooltip { background: var(--fg) !important; color: var(--bg) !important; }
+.toastui-editor-tooltip .arrow { border-top-color: var(--fg) !important; }
+.toastui-editor-ok-button { background: var(--accent) !important; color: #fff !important; }
+:root[data-theme="dark"] .toastui-editor-ok-button { color: #06130f !important; }
+/* ------------------------------------------------------------ 6. preview */
+.post-body { color: var(--fg); }
+.post-body > *:first-child { margin-block-start: 0; }
+.post-body h1, .post-body h2, .post-body h3 { font-weight: 600; line-height: 1.25; margin-block: 1.2em 0.5em; }
+.post-body h1 { font-size: 1.35rem; }
+.post-body h2 { font-size: 1.15rem; }
+.post-body h3 { font-size: 1rem; }
+.post-body p, .post-body li { color: var(--muted); line-height: 1.65; }
+.post-body a { color: var(--accent); }
+.post-body code {
+  font-family: var(--family-mono); font-size: 0.85em;
+  background: var(--surface-2); border: 1px solid var(--line);
+  padding: 0.05em 0.3em; border-radius: var(--r-1);
+}
+.post-body pre {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-2);
+  padding: 0.7rem 0.8rem; overflow-x: auto;
+}
+.post-body pre code { background: transparent; border: 0; padding: 0; }
+.post-body blockquote {
+  margin-inline: 0; padding-inline-start: 0.8rem;
+  border-inline-start: 3px solid var(--accent); color: var(--muted);
+}
+.post-body ul, .post-body ol { padding-inline-start: 1.2rem; }
+.post-body img { max-width: 100%; height: auto; border-radius: var(--r-2); }
+.post-body table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.post-body th, .post-body td { border: 1px solid var(--line); padding: 0.35rem 0.5rem; }
+
+/* ------------------------------------------------------------- 7. motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

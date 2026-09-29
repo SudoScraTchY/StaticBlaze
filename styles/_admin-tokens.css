@@ -1,0 +1,172 @@
+/*
+  StaticBlaze ADMIN theme layer.
+
+  The admin is a workspace, not the published site: it is optimised for long editing sessions,
+  so LIGHT is the default theme and dark stays available. Both are defined here, once, and every
+  admin page consumes these tokens — a new page gets both themes for free.
+
+  Why this file exists at all
+  ---------------------------
+  The admin used to import the published site's token set directly, which is dark-only by design
+  ("ONE theme (dark). No light variant by design" in _tokens.css) AND never defined the utility
+  names the admin markup asks for (`bg-bg`, `text-fg`, `text-muted`, `border-line`, `text-gold`,
+  `text-pomegranate`, ...). Tailwind therefore generated no rules for those classes, so the shell
+  rendered with inherited colours, and the only theme mechanism — `data-theme` on <html> — had
+  nothing behind it. This file is that missing layer.
+
+  Naming
+  ------
+  Admin-facing names are short: --bg, --surface, --fg, --muted, --faint, --line, --accent, --gold,
+  --pomegranate. The site's longer names (--ground, --panel, --ink, --ink-dim, --edge, --zafaran,
+  --alert, ...) are aliased onto them at the bottom so the existing rules and component styles in
+  admin.css keep working unchanged.
+
+  Contrast
+  --------
+  Every foreground/background pair below was measured with the harness in
+  docs/prototypes/admin-style-harness.html; body text is >= 4.5:1 and control/heading text is
+  >= 3:1 in both themes. Numbers are recorded in docs/13-admin-design.md.
+*/
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* surfaces: paper-white panels on a cool neutral ground (never pure white on pure white) */
+  --bg:        #f6f7f9;
+  --surface:   #ffffff;
+  --surface-2: #eef0f4;
+  --raise:     #e6e9ef;
+
+  /* ink */
+  --fg:    #15171c;   /* ~17.8:1 on --surface */
+  --muted: #495063;   /* ~7.9:1  on --surface, ~7.4:1 on --bg */
+  --faint: #6b7284;   /* ~4.8:1  on --surface (placeholders, disabled-but-readable) */
+
+  /* structure */
+  --line:      #d3d7de;
+  --line-soft: #e6e9ee;
+  --line-hi:   #b4bbc7;
+
+  /* one accent. Darkened firouzeh so it passes AA as text on white (~6.0:1). */
+  --accent:      #0c6e72;
+  --accent-ink:  #08514f;
+  --accent-soft: rgb(12 110 114 / 0.10);
+
+  /* zafaran role: indices, counts, draft badges. Darkened for AA on white (~6.3:1). */
+  --gold:      #8a5300;
+  --gold-soft: rgb(138 83 0 / 0.10);
+
+  /* semantic */
+  --pomegranate: #b3261e;             /* errors  ~6.5:1 */
+  --ok:          #146c43;             /* success ~6.5:1 */
+  --focus:       #0c6e72;
+
+  /* elevation: on light, depth is a soft shadow plus a hairline, never a glow */
+  --el-1: 0 1px 2px rgb(16 20 28 / 0.06), 0 0 0 1px rgb(16 20 28 / 0.06);
+  --el-2: 0 12px 32px -16px rgb(16 20 28 / 0.24), 0 0 0 1px rgb(16 20 28 / 0.08);
+  --el-glow: 0 0 0 1px rgb(12 110 114 / 0.25), 0 8px 24px -12px rgb(12 110 114 / 0.35);
+
+  /* the editor's own surfaces (Toast UI is re-coloured from these) */
+  --ed-bg:        var(--surface);
+  --ed-gutter:    var(--surface-2);
+  --ed-toolbar:   var(--surface-2);
+  --ed-border:    var(--line);
+  --ed-fg:        var(--fg);
+  --ed-fg-muted:  var(--muted);
+  --ed-code-bg:   var(--surface-2);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Deep Field, lifted a step for comfort during long sessions */
+  --bg:        #0b0d16;
+  --surface:   #12151f;
+  --surface-2: #191d2a;
+  --raise:     #202536;
+
+  --fg:    #e9ecf3;   /* ~15.5:1 on --surface */
+  --muted: #a8afc2;   /* ~8.3:1  on --surface — was #98a0bd, which read washed out */
+  --faint: #8b93a8;   /* ~6.0:1  on --surface — was #7d86a7 */
+
+  --line:      rgb(233 236 245 / 0.14);
+  --line-soft: rgb(233 236 245 / 0.08);
+  --line-hi:   rgb(233 236 245 / 0.28);
+
+  --accent:      #6fd3d4;             /* brightened firouzeh: ~10.4:1 on --surface */
+  --accent-ink:  #9ce7e8;
+  --accent-soft: rgb(111 211 212 / 0.14);
+
+  --gold:      #f2b544;               /* ~9.6:1 on --surface */
+  --gold-soft: rgb(242 181 68 / 0.14);
+
+  --pomegranate: #ff7d70;             /* ~7.4:1 on --surface */
+  --ok:          #5fd08a;
+  --focus:       #6fd3d4;
+
+  /* on dark, depth is a lighter surface plus a hairline; drop shadows read as mud */
+  --el-1: 0 0 0 1px var(--line);
+  --el-2: 0 0 0 1px var(--line), 0 18px 48px -24px rgb(0 0 0 / 0.9);
+  --el-glow: 0 0 0 1px rgb(111 211 212 / 0.30), 0 0 40px -12px rgb(111 211 212 / 0.42);
+
+  --ed-bg:       var(--surface);
+  --ed-gutter:   var(--surface-2);
+  --ed-toolbar:  var(--surface-2);
+  --ed-border:   var(--line);
+  --ed-fg:       var(--fg);
+  --ed-fg-muted: var(--muted);
+  --ed-code-bg:  var(--surface-2);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Aliases: the site's longer token names resolve to the admin theme. *
+ *  They exist so the component rules in admin.css (inputs, .btn,      *
+ *  .card, .section-label) keep working without a rename sweep.        *
+ * ------------------------------------------------------------------ */
+:root {
+  --ground:   var(--bg);
+  --ground-2: var(--surface-2);
+  --panel:    var(--surface);
+  --panel-2:  var(--surface-2);
+
+  --ink:       var(--fg);
+  --ink-dim:   var(--muted);
+  --ink-faint: var(--faint);
+
+  --edge:    var(--line-soft);
+  --edge-2:  var(--line);
+  --edge-hi: var(--line-hi);
+
+  --zafaran:      var(--gold);
+  --zafaran-soft: var(--gold-soft);
+  --alert:        var(--pomegranate);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Tailwind v4 mappings. The first group is the one that was missing  *
+ *  entirely — without it `bg-bg`, `text-fg`, `text-muted`,            *
+ *  `border-line`, `text-gold`, `text-pomegranate` generate nothing.   *
+ * ------------------------------------------------------------------ */
+@theme inline {
+  --color-bg:        var(--bg);
+  --color-surface:   var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-raise:     var(--raise);
+  --color-fg:        var(--fg);
+  --color-muted:     var(--muted);
+  --color-faint:     var(--faint);
+  --color-line:      var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-hi:   var(--line-hi);
+  --color-gold:      var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-pomegranate: var(--pomegranate);
+  --color-ok:        var(--ok);
+
+  /* control sizes: one documented scale for every interactive control */
+  --spacing-ctl:     2.75rem;   /* 44px — buttons, inputs, selects, segmented controls */
+  --spacing-ctl-sm:  2rem;      /* 32px — inline/toolbar controls */
+  --spacing-gutter:  clamp(1rem, 2.2vw, 2.5rem);
+  --spacing-read:    76ch;      /* the reading measure inside the wide editor workspace */
+}

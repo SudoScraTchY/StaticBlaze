@@ -1,51 +1,80 @@
 @inherits LayoutComponentBase
+@inject IJSRuntime Js
 
-<div class="min-h-screen flex flex-col">
-    <header class="border-b border-line sticky top-0 bg-bg/95 z-40">
-        <div class="mx-auto max-w-5xl px-5 sm:px-8">
-            <div class="flex h-14 items-center justify-between gap-4">
-                <div class="flex items-center gap-6">
-                    <a href="/" class="flex items-center gap-2.5" aria-label="back to site">
-                        <svg class="size-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <path d="M12 2.5 20.2 7.25v9.5L12 21.5 3.8 16.75v-9.5L12 2.5Z" />
-                            <path d="M12 7.5 16 9.75v4.5L12 16.5 8 14.25v-4.5L12 7.5Z" />
-                        </svg>
-                        <span class="font-mono text-xs tracking-widest uppercase text-muted">admin</span>
-                    </a>
-                    @if (Auth.Authed)
-                    {
-                        <nav class="flex items-center gap-5 font-mono text-xs tracking-widest uppercase">
-                            <NavLink class="text-muted hover:text-accent transition-colors duration-150" ActiveClass="text-accent" href="dashboard">dashboard</NavLink>
-                            <NavLink class="text-muted hover:text-accent transition-colors duration-150" ActiveClass="text-accent" href="posts">posts</NavLink>
-                            <NavLink class="text-muted hover:text-accent transition-colors duration-150" ActiveClass="text-accent" href="media">media</NavLink>
-                            <NavLink class="text-muted hover:text-accent transition-colors duration-150" ActiveClass="text-accent" href="settings">settings</NavLink>
-                        </nav>
-                    }
-                </div>
-                <div class="flex items-center gap-4">
-                    @if (Auth.Authed && Auth.Identity is { } identity)
-                    {
-                        <span class="font-mono text-xs text-muted hidden sm:inline">@@@identity.Login</span>
-                        <button type="button" class="btn" @onclick="LockAsync">lock</button>
-                    }
+<div class="admin-shell">
+    <header class="admin-header">
+        <div class="admin-header-in">
+            <div class="flex items-center">
+                <a href="/" class="admin-brand" aria-label="back to site">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path d="M12 2.5 20.2 7.25v9.5L12 21.5 3.8 16.75v-9.5L12 2.5Z" />
+                        <path d="M12 7.5 16 9.75v4.5L12 16.5 8 14.25v-4.5L12 7.5Z" />
+                    </svg>
+                    <span class="admin-brand-label">admin</span>
+                </a>
+                @if (Auth.Authed)
+                {
+                    <nav class="admin-nav" aria-label="admin">
+                        <NavLink href="dashboard">dashboard</NavLink>
+                        <NavLink href="posts">posts</NavLink>
+                        <NavLink href="media">media</NavLink>
+                        <NavLink href="settings">settings</NavLink>
+                    </nav>
+                }
+            </div>
+
+            <div class="admin-header-actions">
+                @if (Auth.Authed && Auth.Identity is { } identity)
+                {
+                    <span class="admin-identity hidden sm:inline">@@@identity.Login</span>
+                    <button type="button" class="btn btn-sm" @onclick="LockAsync">lock</button>
+                }
+                <div class="theme-switch" role="group" aria-label="colour theme">
+                    <button type="button" aria-pressed="@(_theme == "light")" title="light theme" @onclick="UseLight">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+                        light
+                    </button>
+                    <button type="button" aria-pressed="@(_theme == "dark")" title="dark theme" @onclick="UseDark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+                        dark
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="tile-rule opacity-60" aria-hidden="true"></div>
+        <div class="tile-rule" aria-hidden="true"></div>
     </header>
 
-    <main class="flex-1 mx-auto w-full max-w-5xl px-5 sm:px-8 py-8 sm:py-10">
+    <main class="admin-main">
         @Body
     </main>
 
-    <footer class="border-t border-line">
-        <div class="mx-auto max-w-5xl px-5 sm:px-8 py-4 font-mono text-xs text-muted">
-            StaticBlaze admin · GitHub is the database
-        </div>
+    <footer class="admin-footer">
+        <span>StaticBlaze admin · GitHub is the database</span>
+        <span>theme: @_theme · saved in this browser</span>
     </footer>
 </div>
 
 @code {
+    private string _theme = "light";
+    private IJSObjectReference? _themeModule;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _themeModule = await Js.InvokeAsync<IJSObjectReference>("import", "./js/adminTheme.js");
+        _theme = await _themeModule.InvokeAsync<string>("get");
+        StateHasChanged();
+    }
+
+    private async Task UseLight() => await SetThemeAsync("light");
+    private async Task UseDark() => await SetThemeAsync("dark");
+
+    private async Task SetThemeAsync(string theme)
+    {
+        if (_themeModule is null) return;
+        _theme = await _themeModule.InvokeAsync<string>("set", theme);
+    }
+
     private async Task LockAsync()
     {
         await Auth.LockAsync();

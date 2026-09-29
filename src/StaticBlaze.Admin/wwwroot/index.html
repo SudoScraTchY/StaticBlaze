@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="utf-8" />
@@ -10,12 +10,18 @@
     <link rel="stylesheet" href="assets/admin.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <script type="importmap"></script>
-    <script>(function(){var t=localStorage.getItem('sb-theme')||'dark';document.documentElement.setAttribute('data-theme',t)})()</script>
+    <!-- resolve the theme before first paint so there is no flash of the wrong theme -->
+    <script>(function(){try{var t=localStorage.getItem('sb-theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}})()</script>
 </head>
 
 <body class="bg-bg text-fg font-sans min-h-screen antialiased">
-    <div id="app" class="min-h-screen flex items-center justify-center font-mono text-sm text-muted">
-        loading admin…
+    <div id="app">
+        <!-- Blazor replaces this element's children on mount. The loader keeps its own
+             centering classes so the app root itself stays a plain, full-width block:
+             leaving flex/centering on #app would shrink the whole admin to a narrow column. -->
+        <div id="loading" class="min-h-screen flex items-center justify-center font-mono text-sm text-muted">
+            loading admin…
+        </div>
     </div>
 
     <div id="blazor-error-ui" class="hidden fixed bottom-0 w-full z-50 p-4 bg-pomegranate text-white font-mono text-sm">

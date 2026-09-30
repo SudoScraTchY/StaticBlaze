@@ -10,7 +10,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const dist = process.argv[2] || 'dist';
-const BASE = '/StaticBlaze';
+const BASE = '';
 
 function walk(dir, out = []) {
   for (const e of readdirSync(dir)) {

@@ -71,8 +71,8 @@ jobs:
 
       - name: Assemble Pages artifact
         run: |
-          # serve the admin under the project-pages subpath
-          sed -i 's|<base href="/" />|<base href="/StaticBlaze/admin/" />|' admin-published/wwwroot/index.html
+          # serve the admin at root for user site
+          sed -i 's|<base href="/" />|<base href="/admin/" />|' admin-published/wwwroot/index.html
           mkdir -p dist/admin
           cp -r admin-published/wwwroot/* dist/admin/
           echo > dist/.nojekyll

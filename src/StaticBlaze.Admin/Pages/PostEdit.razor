@@ -41,7 +41,7 @@
                @bind="_fm.Title" @bind:after="SyncSlug" />
 
         <div class="editor-frame">
-            <div id="editor-host"></div>
+            <div @ref="_editorHost" id="editor-host"></div>
         </div>
 
         <p class="field-help">

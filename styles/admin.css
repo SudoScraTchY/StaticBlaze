@@ -18,6 +18,22 @@
 
 @source "../src/StaticBlaze.Admin";
 
+/* ------------------------------------------------------------------ *
+ *  ADMIN FONTS                                                        *
+ *  The shared token file declares the faces with root-absolute URLs   *
+ *  (/assets/fonts/...), which 404 under the admin's subpath. These    *
+ *  re-declarations use admin-relative URLs; same families and weights,*
+ *  declared later, so the browser resolves to these copies.           *
+ * ------------------------------------------------------------------ */
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("./assets/fonts/plex-sans-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("./assets/fonts/plex-sans-500.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("./assets/fonts/plex-sans-600.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("./assets/fonts/plex-sans-700.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("./assets/fonts/plex-mono-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("./assets/fonts/plex-mono-500.woff2") format("woff2"); }
+@font-face { font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("./assets/fonts/vazirmatn-arabic-var.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("./assets/fonts/vazirmatn-latin-var.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+200C-200D, U+2010-2011, U+2018-2019, U+201C-201D, U+2026, U+2059, U+20AC, U+2122; }
+
 /* ------------------------------------------------------------------ 1. base */
 @layer base {
   html {

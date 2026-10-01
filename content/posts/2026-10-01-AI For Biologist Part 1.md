@@ -9,17 +9,17 @@ tags:
 - AI
 - Agents
 published: 2026-10-01T22:19:47.4750000+00:00
-modified: 2026-10-01T23:07:09.2650000+00:00
+modified: 2026-10-01T23:23:06.8250000+00:00
 featured: true
 ---
 
 ---
-title: "AI For Biologist Part 1"
-slug: AI-For-Biologist-Part 1
-description: "Most people use AI tools without a clear picture of what is happening on the other side of the screen. Some treat the tool like magic. Others treat it like a search engine that happens to write full sentences. Both pictures lead to the same problem: expectations that do not match what the tool actually is, followed by disappointment or misplaced trust."
+title: "What Is AI, Really? A Plain-Language Explanation"
+slug: what-is-ai-really
+description: "How language models learn, why they have a Knowledge Cutoff, and why they predict patterns instead of recalling facts, explained without jargon."
 author: mehrshad
-category: meta
-tags: [Biology, AI, Agents]
+category: ai
+tags: [language-models, ai-for-biologists]
 published: 2026-01-10T10:00:00Z
 featured: true
 ---

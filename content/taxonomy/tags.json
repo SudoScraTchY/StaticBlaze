@@ -8,5 +8,7 @@
   { "slug": "github-actions", "title": "GitHub Actions", "description": "The pipeline that builds and publishes this site on every push." },
   { "slug": "github-pages", "title": "GitHub Pages", "description": "Where the generated site is hosted for free." },
   { "slug": "deployment", "title": "Deployment", "description": "Getting the build from CI onto the live URL, and back again when needed." },
-  { "slug": "testing", "title": "Testing", "description": "Proving the pipeline works by exercising it, not asserting it." }
+  { "slug": "testing", "title": "Testing", "description": "Proving the pipeline works by exercising it, not asserting it." },
+  { "slug": "language-models", "title": "Language Models", "description": "How text-predicting models are trained and what that means for their answers." },
+  { "slug": "ai-for-biologists", "title": "AI For Biologists", "description": "The series: AI explained from the ground up for researchers." }
 ]

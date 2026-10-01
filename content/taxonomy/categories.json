@@ -1,4 +1,5 @@
 [
   { "slug": "engineering", "title": "Engineering", "description": "Building things and writing down what broke." },
-  { "slug": "meta", "title": "Meta", "description": "This blog, about this blog." }
+  { "slug": "meta", "title": "Meta", "description": "This blog, about this blog." },
+  { "slug": "ai", "title": "AI", "description": "What AI tools are, how they work, and how to use them well." }
 ]

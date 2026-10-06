@@ -13,7 +13,7 @@ featured: true
 
 **AI For Biologists, Part 1**
 
-![07ca4c1c66eab0b6b28d2dbad5a0636b4c47e0884998b4d2bc32b25dac59f522](assets/07ca4c1c66eab0b6b28d2dbad5a0636b4c47e0884998b4d2bc32b25dac59f522.webp)
+![07ca4c1c66eab0b6b28d2dbad5a0636b4c47e0884998b4d2bc32b25dac59f522](https://sudoscratchy.github.io/assets/07ca4c1c66eab0b6b28d2dbad5a0636b4c47e0884998b4d2bc32b25dac59f522.webp)
 
 Most people use AI tools without a clear picture of what is happening on the other side of the screen. Some treat the tool like magic. Others treat it like a search engine that happens to write full sentences. Both pictures lead to the same problem: expectations that do not match what the tool actually is, followed by disappointment or misplaced trust.
 
@@ -50,7 +50,7 @@ flowchart LR
     A ==>|"the idea reaches everyday users"| B
 ```
 
-![ac51754e58fc6303afa661b24dd48d0b8c311b40db1fe5b39a436580fb03f66b](assets/ac51754e58fc6303afa661b24dd48d0b8c311b40db1fe5b39a436580fb03f66b.webp)
+![ac51754e58fc6303afa661b24dd48d0b8c311b40db1fe5b39a436580fb03f66b](https://sudoscratchy.github.io/assets/ac51754e58fc6303afa661b24dd48d0b8c311b40db1fe5b39a436580fb03f66b.webp)
 
 ---
 
@@ -162,7 +162,7 @@ flowchart TB
 
 This is why the Knowledge Cutoff is felt much less in current models than it used to be. One distinction is still worth holding on to: web access supplies **new information**, but the model's underlying knowledge and its command of language still come from the Training period.
 
-![57d828c533066fe4065724668a156da54b5cbd7fe6e7cad35444be1ede585947](assets/57d828c533066fe4065724668a156da54b5cbd7fe6e7cad35444be1ede585947.webp)
+![57d828c533066fe4065724668a156da54b5cbd7fe6e7cad35444be1ede585947](https://sudoscratchy.github.io/assets/57d828c533066fe4065724668a156da54b5cbd7fe6e7cad35444be1ede585947.webp)
 
 ---
 
@@ -237,7 +237,7 @@ The difference comes from the final phase of Training, which uses **real human c
 
 An apprentice who has read widely but never worked with anyone offers a fair comparison. Later, working next to an experienced colleague and receiving feedback, the apprentice learns how to put that reading to use for the person asking. The knowledge was already there. The feedback stage shaped how it gets delivered.
 
-![49619b2f64ec23f47f25ab2dd8d37f06fc013966a7b3558287668dca434b50de](assets/49619b2f64ec23f47f25ab2dd8d37f06fc013966a7b3558287668dca434b50de.webp)
+![49619b2f64ec23f47f25ab2dd8d37f06fc013966a7b3558287668dca434b50de](https://sudoscratchy.github.io/assets/49619b2f64ec23f47f25ab2dd8d37f06fc013966a7b3558287668dca434b50de.webp)
 
 ---
 
@@ -288,7 +288,7 @@ mindmap
       Not just repetition
 ```
 
-![a9d7fd3420c438f34fa920e26e04b5becd359fe9624a90877041559b2346de0a](assets/a9d7fd3420c438f34fa920e26e04b5becd359fe9624a90877041559b2346de0a.webp)
+![a9d7fd3420c438f34fa920e26e04b5becd359fe9624a90877041559b2346de0a](https://sudoscratchy.github.io/assets/a9d7fd3420c438f34fa920e26e04b5becd359fe9624a90877041559b2346de0a.webp)
 
 ---
 
@@ -388,4 +388,4 @@ flowchart LR
     T3 --> S
 ```
 
-![b0c0023afd391554cf485cfef867f687eddaaadd24adb5c400e1c4b8b90c75f1](assets/b0c0023afd391554cf485cfef867f687eddaaadd24adb5c400e1c4b8b90c75f1.webp)
+![b0c0023afd391554cf485cfef867f687eddaaadd24adb5c400e1c4b8b90c75f1](https://sudoscratchy.github.io/assets/b0c0023afd391554cf485cfef867f687eddaaadd24adb5c400e1c4b8b90c75f1.webp)

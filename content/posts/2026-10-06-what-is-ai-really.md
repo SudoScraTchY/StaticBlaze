@@ -8,7 +8,7 @@ tags:
 - language-models
 - ai-for-biologists
 published: 2026-10-06T17:43:50.1030000+00:00
-modified: 2026-10-06T17:48:06.2610000+00:00
+modified: 2026-10-06T17:48:11.5650000+00:00
 featured: true
 ---
 

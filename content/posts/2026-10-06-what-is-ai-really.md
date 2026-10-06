@@ -1,14 +1,11 @@
 ---
-title: What Is AI, Really? A Plain-Language Explanation
+title: "What Is AI, Really? A Plain-Language Explanation"
 slug: what-is-ai-really
-description: How language models learn, why they have a Knowledge Cutoff, and why they predict patterns instead of recalling facts, explained without jargon.
+description: "How language models learn, why they have a Knowledge Cutoff, and why they predict patterns instead of recalling facts, explained without jargon."
 author: mehrshad
-category: ''
-tags:
-- language-models
-- ai-for-biologists
-published: 2026-10-06T17:43:50.1030000+00:00
-modified: 2026-10-06T17:48:11.5650000+00:00
+category: ai
+tags: [language-models, ai-for-biologists]
+published: 2026-01-10T10:00:00Z
 featured: true
 ---
 

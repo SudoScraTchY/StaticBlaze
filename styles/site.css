@@ -382,11 +382,35 @@
  *  HERO
  * ==================================================================== */
 .hero { display: grid; gap: 1.5rem; align-content: center; min-height: var(--stage-h); }
-.hero h1 { font-size: var(--fs-mega); font-weight: 600; letter-spacing: -0.035em; line-height: 0.96; }
-.hero h1 .ln { display: block; overflow: hidden; }
+.hero h1 { max-width: 18ch; font-size: var(--fs-mega); font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; }
+/* the reveal animation clips vertically while the line slides in; the padding keeps descenders
+   (g, y, p) out of the clip zone once the animation has settled */
+.hero h1 .ln { display: block; overflow: hidden; padding-block-end: 0.08em; margin-block-end: -0.08em; }
 .hero h1 .ln > span { display: inline-block; will-change: transform; }
 .hero-sub { max-width: 46ch; font-size: var(--fs-md); color: var(--ink-dim); }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+/* the hero's build console: the blog describes itself the way its CI pipeline does */
+.hero-console {
+  display: grid; gap: 0.3rem; max-width: 52ch;
+  font-family: var(--family-mono); font-size: var(--fs-sm); line-height: 1.5;
+  border-inline-start: 2px solid var(--edge-2);
+  padding-inline-start: 1rem;
+}
+.console-row { display: flex; align-items: baseline; gap: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.console-cmd { color: var(--ink); }
+.console-prompt { color: var(--accent); font-weight: 500; }
+.console-ok { color: var(--ok); }
+.console-dim { color: var(--ink-faint); }
+.console-glyph { flex: none; }
+.console-accent { color: var(--accent); }
+.console-caret {
+  display: inline-block; width: 0.55em; height: 1em; margin-inline-start: 0.15rem;
+  background: var(--accent); align-self: center;
+  animation: console-blink 1.1s steps(1) infinite;
+}
+@keyframes console-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .console-caret { animation: none; } }
 .readout { display: flex; flex-wrap: wrap; gap: 2rem 2.75rem; }
 .hud {
   position: fixed; inset-block-end: 1rem; inset-inline-end: 1rem; z-index: 55;
@@ -405,7 +429,7 @@
  * ==================================================================== */
 .shell { position: relative; z-index: 2; }
 .wrap { max-width: 1440px; margin-inline: auto; padding-inline: clamp(1rem, 4vw, 3rem); }
-.sec { padding-block: clamp(3.5rem, 8vw, 7rem); }
+.sec { padding-block: clamp(2rem, 4vw, 3.5rem); }
 .split { display: grid; gap: clamp(1.5rem, 4vw, 3.5rem); }
 @media (min-width: 1024px) {
   /* variance 9: deliberately unequal columns */
@@ -492,6 +516,48 @@ html[data-anim="on"] [data-reveal].is-in { opacity: 1; }
   font-size: 0.8rem;
   white-space: pre;
 }
+
+/* css safety net for the rendered diagrams: the themeVariables in site.js carry the palette,
+   these rules catch whatever the vendored build still hard-codes (foreignObject text, flow
+   chart edge labels, swimlane titles...), so no diagram ever ships black-on-dark text */
+.prose pre.mermaid svg { font-family: var(--family-sans) !important; }
+.prose pre.mermaid svg text,
+.prose pre.mermaid svg span,
+.prose pre.mermaid svg p,
+.prose pre.mermaid svg div {
+  font-family: var(--family-sans) !important;
+  fill: var(--ink);
+}
+.prose pre.mermaid svg .edgeLabel rect,
+.prose pre.mermaid svg .edgeLabel p,
+.prose pre.mermaid svg .edgeLabel span,
+.prose pre.mermaid svg .edgeLabel div,
+.prose pre.mermaid svg .labelBkg { background-color: var(--panel); }
+.prose pre.mermaid svg .edgeLabel .label foreignObject,
+.prose pre.mermaid svg .label foreignObject { overflow: visible; }
+.prose pre.mermaid svg .actor,
+.prose pre.mermaid svg .noteText,
+.prose pre.mermaid svg .messageText,
+.prose pre.mermaid svg .loopText,
+.prose pre.mermaid svg .loopText > tspan,
+.prose pre.mermaid svg .labelText,
+.prose pre.mermaid svg .sectionTitle,
+.prose pre.mermaid svg .titleText,
+.prose pre.mermaid svg .pieTitleText,
+.prose pre.mermaid svg .slice,
+.prose pre.mermaid svg .legend,
+.prose pre.mermaid svg .taskText,
+.prose pre.mermaid svg .taskTextOutsideRight,
+.prose pre.mermaid svg .taskTextOutsideLeft { fill: var(--ink) !important; }
+.prose pre.mermaid svg .grid .tick text { fill: var(--ink-dim) !important; }
+.prose pre.mermaid svg .er .entityLabel,
+.prose pre.mermaid svg .er .attributeBoxOdd,
+.prose pre.mermaid svg .er .attributeBoxEven { fill: var(--ink) !important; }
+.prose pre.mermaid svg .er .attributeBoxOdd { fill: var(--panel) !important; }
+.prose pre.mermaid svg .er .attributeBoxEven { fill: var(--panel-2) !important; }
+.prose pre.mermaid svg .cluster-label .nodeLabel { color: var(--ink); }
+.prose pre.mermaid svg .nodeLabel { color: var(--ink); }
+.prose pre.mermaid svg .edgeThickness { stroke: var(--accent); }
 /* -------------------------------------------------------------------- *
  *  COMMENTS (giscus) - the iframe is styled by GitHub; we frame it.
  * -------------------------------------------------------------------- */

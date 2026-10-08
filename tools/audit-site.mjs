@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import fs from 'fs';
 // Two audits the brief asks for that are easy to assert and hard to prove:
 //   1. CRAWLABILITY: every page has a unique, non-empty title, description, canonical and og:url;
 //      the canonical matches the route the page was emitted at; and sitemap.xml lists every page.
@@ -10,7 +11,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const dist = process.argv[2] || 'dist';
-const BASE = '/StaticBlaze';
+const BASE = (JSON.parse(fs.readFileSync('content/site.json', 'utf8')).url || '').replace(/^https?:\/\/[^/]+/, '') || '';
 
 function walk(dir, out = []) {
   for (const e of readdirSync(dir)) {

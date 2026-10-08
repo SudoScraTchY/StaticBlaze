@@ -11,6 +11,10 @@ public sealed class SiteConfig
     public string Language { get; set; } = "en";
     public int PostsPerPage { get; set; } = 10;
     public int FeedPostCount { get; set; } = 20;
+
+    /// <summary>Max post cards in the landing "latest" grid on page 1. The newest posts win;
+    /// featured posts already sit in the lead section and are skipped here, not duplicated.</summary>
+    public int LandingPostCount { get; set; } = 6;
     public string Wordmark { get; set; } = "";
     public string DefaultAuthor { get; set; } = "";
     public List<NavLink> Nav { get; set; } = [];

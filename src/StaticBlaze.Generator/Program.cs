@@ -117,8 +117,16 @@ var sharedPosts = PostsJson();
 var sharedScene = SceneJson();
 
 // ----- landing pages -----
-var pages = ManifestBuilder.Paginate(manifest.Posts, site.PostsPerPage);
+// manifest.Posts is already newest-first; state it again at the selection point so the landing
+// grid can never regress to file order. Page 1 shows at most LandingPostCount posts, skipping
+// the featured ones: they already occupy the lead section, and a repeated card is a bug.
 var featured = manifest.Posts.Where(p => p.Featured).Take(4).ToList();
+var landingPool = manifest.Posts.OrderByDescending(p => p.Published).ToList();
+var latestGrid = landingPool
+    .Where(p => !featured.Contains(p))
+    .Take(Math.Max(1, site.LandingPostCount))
+    .ToList();
+var pages = ManifestBuilder.Paginate(landingPool, site.PostsPerPage);
 for (var i = 0; i < pages.Count; i++)
 {
     var page = i + 1;
@@ -128,7 +136,7 @@ for (var i = 0; i < pages.Count; i++)
         ["Site"] = site,
         ["Page"] = page,
         ["TotalPages"] = pages.Count,
-        ["Posts"] = pages[i],
+        ["Posts"] = page == 1 ? latestGrid : pages[i],
         ["Featured"] = featured,
         ["AllPosts"] = manifest.Posts,
         ["TagCount"] = manifest.Tags.Count,

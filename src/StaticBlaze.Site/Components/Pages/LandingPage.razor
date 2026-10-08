@@ -11,11 +11,17 @@
                 <h1 data-hero-title>
                     @foreach (var line in HeroLines)
                     {
-                        <span class="ln"><span>@line</span></span>
+                        <span class="ln"><span>@line<span class="caret" aria-hidden="true"></span></span></span>
                     }
                 </h1>
 
                 <p class="hero-sub" data-hero-stagger>@HeroSub</p>
+
+                <div class="hero-console" data-hero-stagger aria-label="build console">
+                    <div class="console-row console-cmd"><span class="console-prompt">$</span> staticblaze generate --content content<span class="console-caret" aria-hidden="true"></span></div>
+                    <div class="console-row console-ok"><span class="console-glyph">✓</span> 0 errors · markdown → html · feed + sitemap + search index written</div>
+                    <div class="console-row console-dim"><span class="console-glyph">→</span> deploy: github actions → pages · <span class="console-accent">live</span></div>
+                </div>
 
                 <div class="hero-cta" data-hero-stagger>
                     <a class="btn btn-solid" href="@(B)/posts/" data-magnet="6">open the index</a>
@@ -47,8 +53,8 @@
                 <aside class="hero-meta" data-hero-stagger aria-label="site readout">
                     <span>since <b>@FirstPostYear</b></span>
                     <span>last post <b>@LastPostDate</b></span>
-                    <span>base <b>@B</b></span>
                     <span>engine <b>.NET 10</b></span>
+                    <span>host <b>github pages</b></span>
                 </aside>
             </div>
         </section>

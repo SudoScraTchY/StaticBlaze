@@ -1,9 +1,10 @@
 {
   "title": "mehrshad",
   "description": "Systems, software, and the things between them. Notes on .NET, Blazor, and engineering on the open web.",
-  "url": "https://sudoscratchy.github.io/StaticBlaze",
+  "url": "https://sudoscratchy.github.io",
   "language": "en",
   "postsPerPage": 10,
+  "landingPostCount": 6,
   "feedPostCount": 20,
   "wordmark": "mehrshad",
   "defaultAuthor": "mehrshad",

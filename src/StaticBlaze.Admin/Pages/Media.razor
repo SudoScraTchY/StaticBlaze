@@ -1,6 +1,7 @@
 @page "/media"
 @inject IJSRuntime JS
 @inject MediaService MediaSvc
+@inject AdminConfig Config
 
 <div class="page-head">
     <div>
@@ -73,5 +74,5 @@ else
     }
 
     private Task CopyMarkdown(string fileName) =>
-        JS.InvokeVoidAsync("navigator.clipboard.writeText", MediaService.MarkdownFor(fileName)).AsTask();
+        JS.InvokeVoidAsync("navigator.clipboard.writeText", MediaService.MarkdownFor(fileName, Config.SiteUrl)).AsTask();
 }

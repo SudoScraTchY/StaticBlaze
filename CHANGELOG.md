@@ -2,6 +2,58 @@
 
 Notable changes to StaticBlaze, newest first. Dates are the merge date on `main`.
 
+## 2026-10-07 — Landing fixes, hero console, admin media + taxonomy, mermaid theme, White Persian admin theme
+
+**Landing page**
+- The "latest" grid is now explicitly newest-first (re-stated at the selection point in the
+  generator), capped by a new `landingPostCount` setting in `site.json` (default 6), and no
+  longer repeats featured posts: the lead section owns them.
+- Section padding tightened from `clamp(3.5rem, 8vw, 7rem)` to `clamp(2rem, 4vw, 3.5rem)` and
+  the 3D stage height eased from 78vh to 62vh, so the first post card is reachable within about
+  one scroll on desktop.
+
+**Hero**
+- Fixed the font overlap: line-height 0.96 clipped descenders under the reveal animation's
+  `overflow: hidden` (now 1.05 with a descender-safe clip zone), and the headline gets a
+  `max-width: 18ch` so the absolute right-rail readout can never collide with it.
+- New build-console motif under the subline: `$ staticblaze generate --content content` with a
+  blinking caret, a check status line and a deploy line — the blog describes itself the way its
+  CI pipeline does. Copy in `site.json` unchanged; motion rides the existing hero hooks and
+  respects `prefers-reduced-motion`.
+
+**Admin media**
+- `image/webp` (plus avif/gif/bmp/ico/svg fallbacks) no longer lands as `.bin`: the extension
+  comes from the declared content type with a magic-byte sniff as the safety net.
+- Filenames shortened from the full 64-char SHA-256 to its 16-char prefix (same dedup and
+  immutability, readable markdown).
+- Gentler compression: quality 85, and an already-compact JPEG/WebP inside the 1920px cap is
+  uploaded as-is instead of being recompressed.
+
+**Admin copy-MD + editor insert**
+- The "copy md" button and the editor's image insert now emit absolute URLs against a new
+  `SiteUrl` in `appsettings.json` (`https://sudoscratchy.github.io`), so snippets resolve from
+  any page of the live site.
+- `content/site.json` `url` aligned to the root-hosted live site (the generator's BasePath is
+  derived from it, so canonicals/sitemap now match the deployment), and `tools/audit-site.mjs`
+  reads the base path from `site.json` instead of the hardcoded `/StaticBlaze`.
+
+**Admin taxonomy**
+- New tags and categories are appended to `taxonomy/tags.json` / `categories.json` on save
+  (slug + prettified title); the toast reports `taxonomy +N`. The category field is now free
+  text with a datalist of known slugs instead of a closed select.
+
+**Mermaid**
+- Comprehensive `themeVariables`: every diagram family (sequence, gantt, pie, quadrant,
+  journey, git graph, state/class/ER, mindmap, timeline, sankey, xychart) is pinned to site
+  tokens, plus a CSS safety net for whatever the vendored build still hard-codes — no more
+  black/gray text on the dark theme.
+
+**Admin theme: White Persian**
+- Third admin theme `data-theme="persian"`: warm tilework paper surfaces, lajvard-tinted ink,
+  darkened firouzeh accent, saffron numerics — contrast measured AA in the token comments.
+  Wired into the switch (three buttons), `adminTheme.js` and the no-flash bootstrap.
+
+
 ## 2026-09-29 — Admin redesign: light theme, readable editor, real workspace
 
 **Theme layer**

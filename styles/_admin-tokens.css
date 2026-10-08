@@ -119,6 +119,61 @@
   --ed-code-bg:  var(--surface-2);
 }
 
+/*
+  "White Persian" - a third admin theme, light and warm.
+  Surfaces take the paper-white of Persian tilework grounds (slightly warm, never clinical),
+  ink is a deep lajvard-tinted charcoal, and firouzeh stays the single accent. The zafaran
+  role (indices, counts) warms up toward saffron on the paper. Every pair below is measured:
+  body text >= 4.5:1 and control/heading text >= 3:1 against its surface.
+*/
+:root[data-theme="persian"] {
+  color-scheme: light;
+
+  /* surfaces: warm tilework paper on a cooler warm ground */
+  --bg:        #f7f4ee;
+  --surface:   #fffdf8;
+  --surface-2: #f1ece1;
+  --raise:     #e9e2d2;
+
+  /* ink: charcoal with a lajvard undertone */
+  --fg:    #1f2230;   /* ~15.9:1 on --surface */
+  --muted: #4c5063;   /* ~7.5:1  on --surface, ~7.1:1 on --bg */
+  --faint: #6d7183;   /* ~4.7:1  on --surface */
+
+  /* structure: warm hairlines */
+  --line:      #d8d1c0;
+  --line-soft: #e8e2d3;
+  --line-hi:   #b9b09a;
+
+  /* one accent: darkened firouzeh for AA on warm paper (~5.9:1) */
+  --accent:      #0a6a70;
+  --accent-ink:  #075a5f;
+  --accent-soft: rgb(10 106 112 / 0.10);
+
+  /* zafaran role: saffron, darkened for AA on paper (~6.0:1) */
+  --gold:      #7d4e00;
+  --gold-soft: rgb(125 78 0 / 0.10);
+
+  /* semantic */
+  --pomegranate: #ab2721;             /* ~6.3:1 */
+  --ok:          #17643f;             /* ~6.5:1 */
+  --focus:       #0a6a70;
+
+  /* elevation: soft shadow plus hairline, like the light theme but warmer */
+  --el-1: 0 1px 2px rgb(38 32 20 / 0.07), 0 0 0 1px rgb(38 32 20 / 0.07);
+  --el-2: 0 12px 32px -16px rgb(38 32 20 / 0.26), 0 0 0 1px rgb(38 32 20 / 0.08);
+  --el-glow: 0 0 0 1px rgb(10 106 112 / 0.25), 0 8px 24px -12px rgb(10 106 112 / 0.35);
+
+  /* the editor's own surfaces (Toast UI is re-coloured from these) */
+  --ed-bg:        var(--surface);
+  --ed-gutter:    var(--surface-2);
+  --ed-toolbar:   var(--surface-2);
+  --ed-border:    var(--line);
+  --ed-fg:        var(--fg);
+  --ed-fg-muted:  var(--muted);
+  --ed-code-bg:   var(--surface-2);
+}
+
 /* ------------------------------------------------------------------ *
  *  Aliases: the site's longer token names resolve to the admin theme. *
  *  They exist so the component rules in admin.css (inputs, .btn,      *

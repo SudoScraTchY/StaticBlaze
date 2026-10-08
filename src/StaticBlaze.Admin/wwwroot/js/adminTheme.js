@@ -14,14 +14,14 @@ const DEFAULT = 'light';
 export function get() {
   try {
     const stored = localStorage.getItem(KEY);
-    return stored === 'light' || stored === 'dark' ? stored : DEFAULT;
+    return stored === 'light' || stored === 'dark' || stored === 'persian' ? stored : DEFAULT;
   } catch {
     return DEFAULT; // storage unavailable (private mode, blocked cookies)
   }
 }
 
 export function set(theme) {
-  const next = theme === 'dark' ? 'dark' : 'light';
+  const next = theme === 'dark' ? 'dark' : theme === 'persian' ? 'persian' : 'light';
   document.documentElement.setAttribute('data-theme', next);
   try { localStorage.setItem(KEY, next); } catch { /* storage unavailable */ }
   window.dispatchEvent(new CustomEvent('sb:theme', { detail: next }));

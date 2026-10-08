@@ -319,25 +319,174 @@ const $$ = (s, c = document) => [...c.querySelectorAll(s)];
       return;
     }
 
+    // comprehensive base-theme mapping: every variable the vendored mermaid build reads is
+    // pinned to a site token, so no diagram family falls back to mermaid's light defaults
+    // (that was the bug: actor names, edge labels, pie legends... arrived black on dark).
+    const ground = token('--ground', '#06070d');
+    const panel = token('--panel', '#0c101d');
+    const panel2 = token('--panel-2', '#141830');
+    const ink = token('--ink', '#e9ecf5');
+    const inkDim = token('--ink-dim', '#98a0bd');
+    const accent = token('--accent', '#57c5c6');
+    const accentInk = token('--accent-ink', '#8fe3e3');
+    const lajvard = token('--lajvard', '#4a5cff');
+    const lajvardSoft = token('--lajvard-soft', '#1b2150');
+    const zafaran = token('--zafaran', '#f5a524');
+    const alert = token('--alert', '#ff6b5e');
+    const edge = token('--edge-hi', 'rgb(233 236 245 / 0.30)');
+    const family = token('--family-sans', 'system-ui, sans-serif');
+
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: 'strict',
       theme: 'base',
-      fontFamily: token('--family-sans', 'system-ui, sans-serif'),
+      fontFamily: family,
       themeVariables: {
         darkMode: true,
-        background: token('--ground', '#06070d'),
-        primaryColor: token('--lajvard-soft', '#1b2150'),
-        primaryTextColor: token('--ink', '#eef0ff'),
-        primaryBorderColor: token('--accent', '#57c5c6'),
-        lineColor: token('--accent', '#57c5c6'),
-        secondaryColor: token('--panel', '#0c101d'),
-        tertiaryColor: token('--panel', '#0c101d'),
-        noteBkgColor: token('--panel', '#0c101d'),
-        noteTextColor: token('--ink', '#eef0ff'),
-        noteBorderColor: token('--zafaran', '#f5a524'),
-        fontFamily: token('--family-sans', 'system-ui, sans-serif'),
+        background: ground,
+        fontFamily: family,
         fontSize: '15px',
+
+        // nodes / primary surfaces
+        primaryColor: lajvardSoft,
+        primaryTextColor: ink,
+        primaryBorderColor: accent,
+        secondaryColor: panel2,
+        secondaryTextColor: ink,
+        secondaryBorderColor: accent,
+        tertiaryColor: panel,
+        tertiaryTextColor: inkDim,
+        tertiaryBorderColor: edge,
+
+        // connectors + arrows + labels on lines
+        lineColor: accent,
+        textColor: ink,
+        edgeLabelBackground: panel,
+        clusterBkg: panel,
+        clusterBorder: edge,
+        titleColor: ink,
+        sectionBkgColor: panel2,
+        sectionBkgColor2: panel,
+        altSectionBkgColor: panel,
+        sectionBkgColorDark: panel2,
+
+        // sequence diagrams
+        actorBkg: panel2,
+        actorBorder: accent,
+        actorTextColor: ink,
+        actorLineColor: edge,
+        signalColor: ink,
+        signalTextColor: ink,
+        labelBoxBkgColor: panel2,
+        labelBoxBorderColor: accent,
+        labelTextColor: ink,
+        loopTextColor: ink,
+        activationBkgColor: lajvardSoft,
+        activationBorderColor: accent,
+
+        // notes
+        noteBkgColor: zafaran + '1f',
+        noteTextColor: ink,
+        noteBorderColor: zafaran,
+
+        // sequence numbers /SequenceDiagram
+        sequenceNumberColor: ground,
+
+        // gantt
+        gridColor: edge,
+        doneTaskBkgColor: panel2,
+        doneTaskBorderColor: edge,
+        activeTaskBkgColor: lajvardSoft,
+        activeTaskBorderColor: accent,
+        taskBkgColor: lajvardSoft,
+        taskBorderColor: accent,
+        taskTextColor: ink,
+        taskTextOutsideColor: inkDim,
+        taskTextDarkColor: ink,
+        taskTextLightColor: ink,
+        taskTextClickableColor: accentInk,
+        todayLineColor: zafaran,
+        critBkgColor: alert,
+        critBorderColor: alert,
+
+        // pie / quadrant / journey
+        pie1: accent,
+        pie2: lajvard,
+        pie3: zafaran,
+        pie4: accentInk,
+        pie5: inkDim,
+        pieTitleTextSize: '20px',
+        pieTitleTextColor: ink,
+        pieSectionTextSize: '15px',
+        pieSectionTextColor: ink,
+        pieLegendTextSize: '15px',
+        pieLegendTextColor: ink,
+        pieStrokeColor: ground,
+        pieOuterStrokeWidth: '1px',
+        pieOuterStrokeColor: edge,
+        pieOpacity: 0.9,
+        quadrant1Fill: panel2,
+        quadrant2Fill: panel,
+        quadrant3Fill: panel,
+        quadrant4Fill: panel2,
+        quadrant1TextFill: ink,
+        quadrant2TextFill: ink,
+        quadrant3TextFill: ink,
+        quadrant4TextFill: ink,
+        quadrantPointFill: accent,
+        quadrantPointTextFill: ink,
+        quadrantXAxisTextFill: inkDim,
+        quadrantYAxisTextFill: inkDim,
+        quadrantInternalBorderStrokeFill: edge,
+        quadrantExternalBorderStrokeFill: edge,
+        quadrantTitleFill: ink,
+        journeySection: panel2,
+        journeyTitleColor: ink,
+        cScale0: accent, cScale1: lajvard, cScale2: zafaran,
+        cScale3: accentInk, cScale4: lajvard, cScale5: zafaran,
+        cScaleLabel0: ground, cScaleLabel1: ground, cScaleLabel2: ground,
+        cScaleLabel3: ground, cScaleLabel4: ground, cScaleLabel5: ground,
+
+        // state / class / ER
+        stateBkg: panel2,
+        stateBorder: accent,
+        stateTextColor: ink,
+        classText: ink,
+        attributeBackgroundColorOdd: panel,
+        attributeBackgroundColorEven: panel2,
+
+        // git graph
+        git0: accent, git1: lajvard, git2: zafaran, git3: accentInk,
+        git4: lajvard, git5: zafaran, git6: accent, git7: lajvard,
+        gitBranchLabel0: ground, gitBranchLabel1: ground, gitBranchLabel2: ground,
+        gitBranchLabel3: ground, gitBranchLabel4: ground, gitBranchLabel5: ground,
+        gitBranchLabel6: ground, gitBranchLabel7: ground,
+        gitCommit0: accent, gitCommit1: lajvard, gitCommit2: zafaran, gitCommit3: accentInk,
+        gitCommitColor: ink,
+        tagLabelColor: ink,
+        tagLabelBackground: panel2,
+        tagLabelBorder: edge,
+
+        // mindmap / timeline / sankey / xychart
+        mindmapBackground: ground,
+        mindmapTextColor: ink,
+        cEdgeLabelBackground: panel,
+        timelineText: ink,
+        timelinePrimaryTextColor: ink,
+        sankeyLinkColor: lajvard,
+        xyChart: {
+          backgroundColor: ground,
+          titleColor: ink,
+          xAxisLabelColor: inkDim,
+          xAxisTitleColor: ink,
+          xAxisTickColor: edge,
+          xAxisLineColor: edge,
+          yAxisLabelColor: inkDim,
+          yAxisTitleColor: ink,
+          yAxisTickColor: edge,
+          yAxisLineColor: edge,
+          plotColorPalette: accent + ',' + lajvard + ',' + zafaran + ',' + accentInk,
+        },
       },
       flowchart: { curve: 'basis', useMaxWidth: true },
       sequence: { useMaxWidth: true },

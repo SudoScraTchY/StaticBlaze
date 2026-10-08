@@ -2,6 +2,7 @@
 @inject IJSRuntime JS
 @inject PostService Posts
 @inject MediaService Media
+@inject AdminConfig Config
 @inject PreviewRenderer Preview
 @implements IAsyncDisposable
 
@@ -60,12 +61,14 @@
                 </div>
                 <div class="field">
                     <label for="category">category</label>
-                    <select id="category" @bind="_fm.Category">
+                    <input id="category" list="category-options" @bind="_fm.Category" />
+                    <datalist id="category-options">
                         @foreach (var term in _categories)
                         {
                             <option value="@term.Slug">@term.Title</option>
                         }
-                    </select>
+                    </datalist>
+                    <span class="field-help">pick an existing one or type a new slug; new categories are added to the taxonomy on save.</span>
                 </div>
                 <div class="field">
                     <label for="desc">description</label>
@@ -75,7 +78,7 @@
                 <div class="field">
                     <label for="tags">tags</label>
                     <input id="tags" class="font-mono" value="@string.Join(", ", _fm.Tags)" @oninput="OnTagsChanged" />
-                    <span class="field-help">comma separated, must exist in the taxonomy.</span>
+                    <span class="field-help">comma separated; new tags are added to the taxonomy on save.</span>
                 </div>
                 <div class="field-2">
                     <div class="field">
@@ -178,8 +181,10 @@
     [JSInvokable]
     public async Task<string> UploadImageAsync(byte[] bytes, string contentType)
     {
-        var url = await Media.UploadAsync(bytes, contentType);
-        return url;
+        var fileName = await Media.UploadAsync(bytes, contentType);
+        // return the published-site URL so the editor inserts the same markdown the copy button emits
+        var origin = string.IsNullOrWhiteSpace(Config.SiteUrl) ? "" : Config.SiteUrl.TrimEnd('/');
+        return $"{origin}/assets/{fileName}";
     }
 
     [JSInvokable]
@@ -201,12 +206,14 @@
             {
                 _existingFile = await Posts.CreatePostAsync(_fm, _body);
                 IsNew = false;
-                _saved = $"created {_existingFile}";
+                var added = await Posts.EnsureTaxonomyAsync(_fm);
+                _saved = added > 0 ? $"created {_existingFile} · taxonomy +{added}" : $"created {_existingFile}";
             }
             else
             {
                 await Posts.SavePostAsync(new AdminPost(_existingFile, "", _fm, _body), $"update: {_fm.Slug}");
-                _saved = $"saved · {DateTimeOffset.Now:HH:mm:ss}";
+                var added = await Posts.EnsureTaxonomyAsync(_fm);
+                _saved = added > 0 ? $"saved · taxonomy +{added}" : $"saved · {DateTimeOffset.Now:HH:mm:ss}";
             }
         }
         catch (Exception ex)

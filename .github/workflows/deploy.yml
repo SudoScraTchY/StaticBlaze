@@ -71,8 +71,8 @@ jobs:
 
       - name: Assemble Pages artifact
         run: |
-          # serve the admin under the project-pages subpath
-          sed -i 's|<base href="/" />|<base href="/StaticBlaze/admin/" />|' admin-published/wwwroot/index.html
+          # serve the admin at root for user site
+          sed -i 's|<base href="/" />|<base href="/admin/" />|' admin-published/wwwroot/index.html
           mkdir -p dist/admin
           cp -r admin-published/wwwroot/* dist/admin/
           echo > dist/.nojekyll
@@ -114,7 +114,7 @@ jobs:
         # the artifact was briefly live, then a Jekyll render of README.md replaced it.
         # Without this step that is silent. With it, it is one clear line and a failed run.
         env:
-          SITE_URL: https://sudoscratchy.github.io/StaticBlaze
+          SITE_URL: https://sudoscratchy.github.io/
         run: |
           ok=0
           for attempt in 1 2 3 4 5 6; do

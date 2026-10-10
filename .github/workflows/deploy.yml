@@ -117,13 +117,16 @@ jobs:
         # publishes on every push and can overwrite this artifact - which is what happened here:
         # the artifact was briefly live, then a Jekyll render of README.md replaced it.
         # Without this step that is silent. With it, it is one clear line and a failed run.
-        env:
-          # the Pages URL is NOT derivable from github.server_url (that would be a github.com
-          # repo path and curl would fail every attempt - exactly the bug that shipped): the
-          # user site lives at https://<owner>.github.io/ and the project site at
-          # https://<owner>.github.io/<repo>/. Derive it the same way as the admin base path.
-          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
         run: |
+          # the Pages URL: user site -> https://<owner>.github.io/, project site ->
+          # https://<owner>.github.io/<repo>/. The repo name is appended only when the repo is
+          # NOT itself the user site (the same condition the admin base path uses below the
+          # deploy step). A wrong URL here makes curl fail every attempt while the deployed
+          # site is perfect - exactly the bug this step once shipped with.
+          OWNER="${{ github.repository_owner }}"
+          SITE_URL="https://$OWNER.github.io/${{ github.event.repository.name }}"
+          # when this repo IS the user site, the repo-name segment must not appear in the URL
+          SITE_URL="${SITE_URL%/sudoscratchy.github.io}"
           SITE_URL="${SITE_URL%/}/"
           ok=0
           # the pages CDN can keep serving the previous deployment for a few minutes while the

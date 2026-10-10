@@ -43,6 +43,15 @@ param(
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# --- identity guard ---------------------------------------------------------------
+# This machine's shell can carry GIT_AUTHOR_NAME/GIT_COMMITTER_NAME=zwork env overrides that
+# beat .gitconfig (that cost a history rewrite once). Commits must carry the registered
+# machine identity, so pin it explicitly for this process and everything it spawns.
+$env:GIT_AUTHOR_NAME = 'SudoScraTchY'
+$env:GIT_AUTHOR_EMAIL = 'SainScraTchY@gmail.com'
+$env:GIT_COMMITTER_NAME = 'SudoScraTchY'
+$env:GIT_COMMITTER_EMAIL = 'SainScraTchY@gmail.com'
+
 $repo = Split-Path $PSScriptRoot -Parent
 Set-Location $repo
 

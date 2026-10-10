@@ -1,8 +1,8 @@
 # StaticBlaze — handoff for a fresh chat
 
 _This file is the entry point for any new conversation working on this repository. It is written
-to be read cold: everything a new session needs is here or one hop away. Last updated **2026-09-30**
-by the AutoCoder session; commit `407a36b` on `main`._
+to be read cold: everything a new session needs is here or one hop away. Last updated **2026-10-10**
+by the AutoClaw session; commit `c0072ba` on `main`._
 
 ---
 
@@ -17,12 +17,21 @@ pre-built HTML, and an admin app edits the blog by committing Markdown/JSON thro
 - **Design language:** "Deep Field" — dark-only public site, realtime 3D archive graph, one accent
   (firouzeh `#57c5c6`), IBM Plex + Vazirmatn fonts. The **admin** is a light-default workspace
   since 2026-09-29 (dark kept).
-- **Hosting:** GitHub Pages, project site → every URL lives under **`/StaticBlaze/`**.
-  - Public site: https://sudoscratchy.github.io/StaticBlaze/
-  - Admin: https://sudoscratchy.github.io/StaticBlaze/admin/ (the PAT vault is per-browser;
-    there are no user accounts)
-- **Repo:** https://github.com/SudoScraTchY/StaticBlaze (public). Remote auth uses the machine's
-  stored credential helper — do **not** extract, print or move tokens.
+- **Two-repo topology (since 2026-10-08):** StaticBlaze is the SOURCE; the blog repo is the
+  LIVE site that actually gets used. The blog shares git history with source (it is a copy with
+  blog-only adaptations, not a GitHub fork).
+  - Source: https://github.com/SudoScraTchY/StaticBlaze → project site
+    https://sudoscratchy.github.io/StaticBlaze/ (admin under /StaticBlaze/admin/)
+  - Blog: https://github.com/SudoScraTchY/sudoscratchy.github.io → the live site
+    https://sudoscratchy.github.io/ (admin under /admin/, edits the blog repo itself)
+  - Sync rule: after every source update run `powershell -File tools/sync-blog.ps1`
+    (merge with conflict policy: code=source wins, taxonomy=union by slug, content=blog wins;
+    re-applies protected blog-only files: author bio, AuthorPage.razor résumé section, the
+    résumé pdf; verifies build+tests+gates; pushes both repos). `-WhatIf` for a dry run.
+  - The deploy workflow is repo-aware: admin base path and SITE_URL derive from the repository
+    name, so one tree deploys correctly to both sites with no per-repo patching.
+- Remote auth uses the machine's stored credential helper — do **not** extract, print or move
+  tokens. (gh CLI is installed but not logged in inside this shell; use the API + git.)
 - **Local path (the bound workspace):** `M:\Users\SaintScraTchY\RiderProjects\StaticBlaze`
 
 ## 2. Repository map

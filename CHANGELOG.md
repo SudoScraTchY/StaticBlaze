@@ -2,6 +2,29 @@
 
 Notable changes to StaticBlaze, newest first. Dates are the merge date on `main`.
 
+## 2026-10-08 — Two-repo sync: source → blog, one command
+
+**Topology**
+- The live blog lives at https://sudoscratchy.github.io (repo `sudoscratchy.github.io`), a copy
+  of this project with blog-only adaptations: the real author bio, a résumé section + pdf on the
+  author page, its own admin config. StaticBlaze is the source of truth for code; the blog is
+  where publishing happens.
+- `deploy.yml` is now repo-aware: the admin base path (`/StaticBlaze/admin/` vs `/admin/`) and
+  the verification `SITE_URL` derive from the repository name, so one tree deploys correctly to
+  both sites and syncs can never conflict on these lines.
+
+**Sync**
+- New `tools/sync-blog.ps1`: fetch blog remote → merge with a conflict policy (code: source
+  wins; taxonomy: union by slug; content: blog wins) → re-apply the protected blog-only files
+  (bio, résumé section, pdf) → verify build + tests + tailwind + generation + audit gates →
+  push both repos. `-WhatIf` prints the plan without touching anything.
+- The initial sync ran for real: yesterday's landing/hero/mermaid/media/taxonomy/theme fixes
+  are live on the blog with the blog's adaptations intact, and both repos build green from the
+  same commit.
+- Cleanup the merge exposed: the source repo held a duplicate of `what-is-ai-really` (created
+  through the old admin with .bin assets); the blog copy with .webp assets and absolute URLs is
+  canonical, so the duplicate post and its 7 .bin assets were removed.
+
 ## 2026-10-07 — Landing fixes, hero console, admin media + taxonomy, mermaid theme, White Persian admin theme
 
 **Landing page**

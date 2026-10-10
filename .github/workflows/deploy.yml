@@ -70,9 +70,13 @@ jobs:
         run: dotnet publish src/StaticBlaze.Admin -c Release -o admin-published
 
       - name: Assemble Pages artifact
+        # one workflow serves both repos: on the user site (sudoscratchy.github.io) the admin
+        # lives at /admin/, on the project site (StaticBlaze) at /StaticBlaze/admin/ - derived
+        # from the repository name so a sync never has to patch this file per repo.
         run: |
-          # serve the admin at root for user site
-          sed -i 's|<base href="/" />|<base href="/admin/" />|' admin-published/wwwroot/index.html
+          BASE_PATH="/${{ github.event.repository.name }}"
+          if [ "$BASE_PATH" = "/sudoscratchy.github.io" ]; then BASE_PATH=""; fi
+          sed -i "s|<base href=\"/\" />|<base href=\"$BASE_PATH/admin/\" />|" admin-published/wwwroot/index.html
           mkdir -p dist/admin
           cp -r admin-published/wwwroot/* dist/admin/
           echo > dist/.nojekyll
@@ -114,7 +118,7 @@ jobs:
         # the artifact was briefly live, then a Jekyll render of README.md replaced it.
         # Without this step that is silent. With it, it is one clear line and a failed run.
         env:
-          SITE_URL: https://sudoscratchy.github.io/
+          SITE_URL: ${{ github.server_url }}/${{ github.repository_owner }}.github.io/
         run: |
           ok=0
           for attempt in 1 2 3 4 5 6; do

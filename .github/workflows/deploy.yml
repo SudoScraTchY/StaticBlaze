@@ -121,7 +121,10 @@ jobs:
           SITE_URL: ${{ github.server_url }}/${{ github.repository_owner }}.github.io/
         run: |
           ok=0
-          for attempt in 1 2 3 4 5 6; do
+          # the pages CDN can keep serving the previous deployment for a few minutes while the
+          # new one propagates (seen on 2026-10-10: deploy green, verify raced it, site was
+          # correct 3 minutes later). poll for up to 8 minutes before declaring failure.
+          for attempt in $(seq 1 32); do
             sleep 15
             html="$(curl -fsS "$SITE_URL/" || true)"
             if printf '%s' "$html" | grep -q 'class="cockpit"'; then

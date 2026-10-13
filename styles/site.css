@@ -433,7 +433,7 @@
 .ov-line:nth-child(3) { padding-inline-start: clamp(1rem, 7vw, 7rem); }
 .ov-line:nth-child(4) { padding-inline-start: clamp(1.5rem, 10.5vw, 10.5rem); }
 .ov-word { display: inline-block; white-space: nowrap; }
-.ov-char { display: inline-block; font-variation-settings: 'wght' var(--wght, 700); }
+.ov-char { --wght: 700; display: inline-block; font-variation-settings: 'wght' var(--wght, 700); }
 /* the last line is inked as an outline and fills as the cursor approaches
    (the per-char fill is driven by motion.js; without JS it stays outline) */
 .ov-line--ghost .ov-char {

@@ -25,6 +25,18 @@ Notable changes to StaticBlaze, newest first. Dates are the merge date on `main`
 - Reduced motion or no motion runtime: static resting-weight headline, no plasma, the stage
   atmosphere carries the section.
 
+**Hotfix (same day, from a headless-browser probe of the live page)**
+- The GSAP intro tweened the `--wght` custom property with a `.from()` whose end value came
+  off the computed style; the property had no computed value there, so the intro landed every
+  glyph at weight 0 (clamped to Syne's minimum) and the kinetic typography read as static.
+  The intro is now an explicit `fromTo` (430 to 700) and `.ov-char` defines `--wght: 700` as a
+  baseline. Probe evidence: computed `font-variation-settings` was `"wght" 0` on the deployed
+  page, `"wght" 700` after the fix.
+- The plasma shader's output alpha sat below the visibility floor on a dark ground (canvas
+  mean brightness ~0). Ribbons broadened, output raised ~5x, drift speed up, and the renderer
+  now keeps its drawing buffer so the field is pixel-measurable (probe: 63% of the canvas
+  emits light, mean brightness 46/255).
+
 **Gates**
 - dotnet build 0 errors; tests 27/27; tailwind, generation, `audit-site`, `check-crossengine`,
   `check-casing` all PASS; the served page verified byte-level (new markup, font, shader).

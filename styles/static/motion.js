@@ -55,7 +55,9 @@
     const chars = qa('.ov-char', heroTitle);
     const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
     if (chars.length) {
-      tl.from(chars, { yPercent: 124, '--wght': 430, duration: 1.05, stagger: 0.016 }, 0.12);
+      /* explicit fromTo: the end value must never depend on the computed style
+         (an undefined --wght once interpolated to 0 and left the headline thin) */
+      tl.fromTo(chars, { yPercent: 124, '--wght': 430 }, { yPercent: 0, '--wght': 700, duration: 1.05, stagger: 0.016 }, 0.12);
       tl.add(() => initProximity(heroTitle, chars), '>-0.05');
     } else {
       tl.from(heroTitle, { yPercent: 12, opacity: 0, duration: 1 }, 0.12);

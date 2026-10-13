@@ -80,21 +80,23 @@ const FRAG = `
   void main() {
     vec2 uv = vUv;
     vec2 p = uv * vec2(uRes.x / max(uRes.y, 1.0), 1.0) * 1.7;
-    float t = uTime * 0.055;
+    float t = uTime * 0.09;
     vec2 m = uMouse * 0.22;
     vec2 q = vec2(fbm(p + t), fbm(p + vec2(5.2, 1.3) - t));
     vec2 r = vec2(fbm(p + 2.1 * q + vec2(1.7, 9.2) + m.x),
                   fbm(p + 2.1 * q + vec2(8.3, 2.8) - m.y));
     float f = fbm(p + 2.3 * r);
-    float rib = smoothstep(0.42, 0.98, f);
-    float core = smoothstep(0.62, 0.96, f) * r.y;
-    vec3 col = uColA * rib * 0.55;
-    col += uColB * core * 0.5;
-    col += uColB * pow(max(r.x - 0.55, 0.0), 2.0) * 0.35;
+    // broad luminous ribbons + firouzeh cores; tuned so alpha stays well above
+    // the visibility floor on a dark ground (v1 was mathematically invisible)
+    float rib = smoothstep(0.34, 0.72, f);
+    float core = smoothstep(0.55, 0.85, f) * r.y;
+    vec3 col = uColA * rib * 0.85;
+    col += uColB * core * 0.75;
+    col += uColB * pow(max(r.x - 0.45, 0.0), 2.0) * 0.6;
     // keep the field off the very top so the cockpit nav stays quiet
     col *= smoothstep(0.02, 0.3, uv.y) * 0.85 + 0.15;
     float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
-    float a = clamp(lum * 1.5, 0.0, 0.92);
+    float a = clamp(lum * 2.2, 0.0, 0.9);
     // dither against banding on wide gradients
     col += (hash(uv * uRes + fract(uTime)) - 0.5) / 160.0;
     gl_FragColor = vec4(col, a);
@@ -129,7 +131,7 @@ async function boot() {
 
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, premultipliedAlpha: false, antialias: false, powerPreference: 'low-power' });
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, premultipliedAlpha: false, antialias: false, powerPreference: 'low-power', preserveDrawingBuffer: true });
   } catch {
     off(host);
     return;

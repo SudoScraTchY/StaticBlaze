@@ -35,23 +35,130 @@
   const qa = (s, c = document) => [...c.querySelectorAll(s)];
   const fine = window.matchMedia('(pointer: fine)').matches;
 
+  /* the landing hero's plasma field: loaded only where the canvas exists */
+  if (q('[data-hero-canvas]')) {
+    import('./hero-scene.js').catch(() => {
+      const fxHost = q('[data-hero-fx]');
+      if (fxHost) fxHost.dataset.heroFx = 'off';
+    });
+  }
+
   /* ------------------------------------------------------------------ *
-   *  1. HERO INTRO - one authored sequence, not scattered micro-fades
+   *  1. HERO - OVERDRIVE (kinetic typography)
+   *  Chars rise out of their line clips while thickening along Syne's
+   *  wght axis; after settling, a pointer-proximity engine breathes
+   *  weight around the cursor and fills the outline line. Transform,
+   *  opacity and one numeric custom property are all that animate.
    * ------------------------------------------------------------------ */
   const heroTitle = q('[data-hero-title]');
   if (heroTitle) {
+    const chars = qa('.ov-char', heroTitle);
     const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-    const lines = qa('.ln > span', heroTitle);
-    if (lines.length) {
-      tl.from(lines, { yPercent: 118, duration: 1.15, stagger: 0.09 }, 0.1);
+    if (chars.length) {
+      tl.from(chars, { yPercent: 124, '--wght': 430, duration: 1.05, stagger: 0.016 }, 0.12);
+      tl.add(() => initProximity(heroTitle, chars), '>-0.05');
     } else {
-      tl.from(heroTitle, { yPercent: 12, opacity: 0, duration: 1 }, 0.1);
+      tl.from(heroTitle, { yPercent: 12, opacity: 0, duration: 1 }, 0.12);
     }
     const rest = qa('[data-hero-stagger]');
     if (rest.length) {
-      tl.from(rest, { y: 22, opacity: 0, duration: 0.85, stagger: 0.08 }, 0.42);
+      tl.from(rest, { y: 22, opacity: 0, duration: 0.85, stagger: 0.08 }, 0.52);
     }
-    tl.from('[data-hero-line]', { scaleX: 0, transformOrigin: 'left center', duration: 0.9 }, 0.5);
+    tl.from('[data-hero-line]', { scaleX: 0, transformOrigin: 'left center', duration: 0.9 }, 0.6);
+  }
+
+  /* pointer-proximity weight engine: lerp each char's --wght toward a
+     cursor-distance target, settle, then re-cache the glyph positions
+     (weights change advance widths, so positions are re-measured at rest).
+     Fine pointers only; every listener is passive. */
+  function initProximity(title, chars) {
+    if (!fine || !chars.length || title.dataset.prox === 'on') return;
+    title.dataset.prox = 'on';
+    const BASE = 700, MIN = 520, MAX = 800, R = 210, FILL_R = 250;
+    const inkRgb = (() => {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+      const m = /^#([0-9a-f]{6})$/i.exec(v);
+      return m ? [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16)).join(',') : '233,236,245';
+    })();
+    const st = chars.map((el) => ({ el, x: 0, y: 0, w: BASE, f: 0, ghost: !!el.closest('.ov-line--ghost') }));
+    let px = -1e4, py = -1e4, raf = 0, lastMove = 0;
+
+    const cache = () => {
+      const tr = title.getBoundingClientRect();
+      for (const s of st) {
+        const r = s.el.getBoundingClientRect();
+        s.x = r.left + r.width / 2 - tr.left;
+        s.y = r.top + r.height / 2 - tr.top;
+      }
+    };
+    const paint = (s) => {
+      s.el.style.setProperty('--wght', String(Math.round(s.w)));
+      if (!s.ghost) return;
+      if (s.f <= 0.004) { s.el.style.removeProperty('color'); s.f = 0; }
+      else s.el.style.color = 'rgba(' + inkRgb + ',' + s.f.toFixed(3) + ')';
+    };
+    const tick = () => {
+      raf = 0;
+      const tr = title.getBoundingClientRect();
+      const lx = px - tr.left;
+      const ly = py - tr.top;
+      const idle = performance.now() - lastMove > 160;
+      let drift = 0;
+      for (const s of st) {
+        const d = Math.hypot(lx - s.x, (ly - s.y) * 0.55);
+        const near = Math.max(0, 1 - d / R);
+        const tw = idle ? BASE : MIN + near * near * (MAX - MIN);
+        const tf = idle || !s.ghost ? 0 : Math.max(0, 1 - d / FILL_R);
+        const dw = tw - s.w;
+        const df = tf - s.f;
+        if (Math.abs(dw) > 0.4) { s.w += dw * 0.16; paint(s); drift = Math.max(drift, Math.abs(dw)); }
+        else if (s.w !== tw) { s.w = tw; paint(s); }
+        if (Math.abs(df) > 0.004) { s.f += df * 0.14; paint(s); drift = Math.max(drift, Math.abs(df) * 100); }
+        else if (s.f !== tf) { s.f = tf; paint(s); }
+      }
+      if (drift > 0) raf = requestAnimationFrame(tick);
+      else cache();
+    };
+    const move = (e) => {
+      px = e.clientX; py = e.clientY; lastMove = performance.now();
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const leave = () => {
+      px = -1e4; py = -1e4; lastMove = 0;
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    title.addEventListener('pointermove', move, { passive: true });
+    title.addEventListener('pointerleave', leave, { passive: true });
+    let rt = 0;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(cache, 180); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(cache).catch(() => {});
+    cache();
+  }
+
+  /* the ticker: one endless run, paused while the hero is off screen */
+  const ticker = q('[data-ov-ticker]');
+  if (ticker) {
+    const spin = gsap.to(ticker, { xPercent: -50, ease: 'none', duration: 28, repeat: -1 });
+    if (ScrollTrigger) {
+      ScrollTrigger.create({
+        trigger: ticker,
+        start: 'top bottom',
+        end: 'bottom top',
+        onToggle: (self) => (self.isActive ? spin.play() : spin.pause()),
+      });
+    }
+  }
+
+  /* the hero hands over to the page as it scrolls out (transform + opacity only) */
+  const heroSec = q('.hero-sec');
+  const heroOv = q('.hero-ov');
+  if (heroSec && heroOv && ScrollTrigger) {
+    gsap.to(heroOv, {
+      yPercent: -9,
+      opacity: 0.3,
+      ease: 'none',
+      scrollTrigger: { trigger: heroSec, start: 'top top', end: 'bottom top', scrub: true },
+    });
   }
 
   /* ------------------------------------------------------------------ *

@@ -2,6 +2,33 @@
 
 Notable changes to StaticBlaze, newest first. Dates are the merge date on `main`.
 
+## 2026-10-13 — Overdrive hero: kinetic typography redesign
+
+**Hero (landing page)**
+- Full redesign of the landing hero (the "Overdrive" direction): a staircase of uppercase Syne
+  display lines whose weight breathes along the wght axis (GSAP intro + a pointer-proximity
+  engine in `motion.js`), with the last line inked as an outline that fills as the cursor
+  approaches. Screen-reader safe by construction: aria-label on the h1, aria-hidden lines.
+- New hero-scoped WebGL plasma field (`styles/static/hero-scene.js`, Three.js): domain-warped
+  fbm ribbons in lajvard/firouzeh floating over the stage, rendered at 55% resolution and
+  CSS-upscaled. Capability gates mirror `scene.js` (reduced-motion, save-data, low memory,
+  no WebGL, small viewports); the frame loop runs only while the hero is on screen and the tab
+  is visible; the fx opacity (scroll fade + intro fade) is owned by the scene.
+- New self-hosted display font: Syne variable (latin, wght 400-800, OFL license shipped) at
+  `styles/fonts/syne-var.woff2`, exposed as `--family-display`; IBM Plex unchanged for
+  body/mono, Vazirmatn unchanged for Persian script.
+- New copy in `content/site.json`: kicker "systems · software · notes", headline
+  "Systems, / software, / & the space / between.", new sub line. The fake build console is
+  replaced by a real-facts ticker (`.ov-ticker`); CTAs rebuilt (`.btn-ov` gradient sweep,
+  `.link-ov` underline arrow); the metrics readout is restyled as Syne numerals in zafaran
+  over hairline-separated columns.
+- Reduced motion or no motion runtime: static resting-weight headline, no plasma, the stage
+  atmosphere carries the section.
+
+**Gates**
+- dotnet build 0 errors; tests 27/27; tailwind, generation, `audit-site`, `check-crossengine`,
+  `check-casing` all PASS; the served page verified byte-level (new markup, font, shader).
+
 ## 2026-10-08 — Two-repo sync: source → blog, one command
 
 **Topology**

@@ -4,32 +4,50 @@
           SceneData=@SceneData PostsJson=@PostsJson>
     @if (Page == 1)
     {
-        <section class="sec wrap">
-            <div class="hero">
+        <section class="hero-sec">
+            <div class="hero-fx" data-hero-fx aria-hidden="true"><canvas data-hero-canvas></canvas></div>
+            <div class="wrap hero-ov">
+                <i class="ov-rule" aria-hidden="true"></i>
+                <span class="ov-side" aria-hidden="true">sudoScratchy · github · est. 2026</span>
+
                 <p class="eyebrow"><b>01</b>@HeroKicker</p>
 
-                <h1 data-hero-title>
-                    @foreach (var line in HeroLines)
+                <h1 class="ov-title" data-hero-title aria-label="@FullTitle">
+                    @for (var i = 0; i < HeroLines.Count; i++)
                     {
-                        <span class="ln"><span>@line<span class="caret" aria-hidden="true"></span></span></span>
+                        var ghost = i == HeroLines.Count - 1 && HeroLines.Count > 1;
+                        <span class="ov-line@(ghost ? " ov-line--ghost" : "")" aria-hidden="true">
+                            @foreach (var word in HeroLines[i].Split(' '))
+                            {
+                                <span class="ov-word">@foreach (var ch in word) { <span class="ov-char">@ch</span> }</span>
+                                @(" ")
+                            }
+                        </span>
                     }
                 </h1>
 
                 <p class="hero-sub" data-hero-stagger>@HeroSub</p>
 
-                <div class="hero-console" data-hero-stagger aria-label="build console">
-                    <div class="console-row console-cmd"><span class="console-prompt">$</span> staticblaze generate --content content<span class="console-caret" aria-hidden="true"></span></div>
-                    <div class="console-row console-ok"><span class="console-glyph">✓</span> 0 errors · markdown → html · feed + sitemap + search index written</div>
-                    <div class="console-row console-dim"><span class="console-glyph">→</span> deploy: github actions → pages · <span class="console-accent">live</span></div>
+                <div class="ov-ticker" data-hero-stagger>
+                    <div class="ov-ticker-track" data-ov-ticker>
+                        <span class="ov-ticker-run">@TickerRun</span>
+                        <span class="ov-ticker-run" aria-hidden="true">@TickerRun</span>
+                    </div>
                 </div>
 
                 <div class="hero-cta" data-hero-stagger>
-                    <a class="btn btn-solid" href="@(B)/posts/" data-magnet="6">open the index</a>
-                    <a class="btn" href="@(B)/archive/" data-magnet="6">see the archive</a>
+                    <a class="btn-ov" href="@(B)/posts/" data-magnet="6">
+                        <span>read the latest</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+                    </a>
+                    <a class="link-ov" href="@(B)/archive/" data-magnet="4">
+                        <span>browse the archive</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+                    </a>
                     <span class="form-note">press <span class="kbd">/</span> to search anywhere</span>
                 </div>
 
-                <div class="readout" data-hero-stagger>
+                <div class="ov-readout" data-hero-stagger aria-label="post metrics">
                     <div>
                         <span class="metric" data-count="@PostsPublished">@PostsPublished</span>
                         <span class="metric-label">posts</span>
@@ -48,7 +66,7 @@
                     </div>
                 </div>
 
-                <div data-hero-line style="height:1px;background:linear-gradient(90deg,var(--lajvard),var(--accent),transparent)"></div>
+                <div data-hero-line style="height:2px;background:linear-gradient(90deg,var(--lajvard),var(--accent),transparent)"></div>
                 @* a quiet data rail: something to read besides the headline, and it is all true *@
                 <aside class="hero-meta" data-hero-stagger aria-label="site readout">
                     <span>since <b>@FirstPostYear</b></span>
@@ -135,6 +153,21 @@
     private int TotalWords => AllPosts.Sum(p => p.ReadTimeMinutes) * 200;
     private string FirstPostYear => AllPosts.Count == 0 ? "-" : AllPosts.Min(p => p.Published.Year).ToString();
     private string LastPostDate => AllPosts.Count == 0 ? "-" : AllPosts.Max(p => p.Published).ToString("yyyy-MM-dd");
+
+    private string FullTitle => string.Join(" ", HeroLines);
+
+    private static readonly string[] TickerItems =
+    [
+        "static to the last byte",
+        "markdown in, html out",
+        ".NET 10 generator",
+        "github actions → github pages",
+        "webgl archive graph",
+        "zero trackers",
+        "rss · atom · sitemap",
+    ];
+
+    private string TickerRun => string.Join(" · ", TickerItems);
 
     private string JsonLd => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
     {

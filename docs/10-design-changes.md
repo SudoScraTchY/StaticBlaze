@@ -14,6 +14,7 @@ path here no longer matches the tree, that is a bug in this doc, not your workfl
 | UI behaviours (palette, filters, form) | `styles/static/site.js` | Framework-free. |
 | Motion system | `styles/static/motion.js` | GSAP + ScrollTrigger only. No `addEventListener('scroll')`. |
 | 3D background graph | `styles/static/scene.js` | The archive as a knowledge graph; loaded lazily from `motion.js`. |
+| Hero plasma field | `styles/static/hero-scene.js` | Landing-only WebGL light field behind the hero; dynamic import from `motion.js`; token colours, scene.js capability gates. |
 | Related-posts graph (post page) | `styles/static/graph.js` | SVG, no WebGL; reads `#post-graph-data`. |
 | Page transition | `styles/static/motion.js` (§4) + `[data-progress]` in `SitePage.razor` | The "focus pull" blur refocus. |
 | Markup shell | `src/StaticBlaze.Site/Components/SitePage.razor` | The `<html>`/`<head>`/body shell every page renders through. |

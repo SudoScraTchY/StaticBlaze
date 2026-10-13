@@ -379,39 +379,153 @@
 .form-err { color: var(--alert); font-size: var(--fs-xs); margin-block-start: 0.35rem; }
 
 /* ==================================================================== *
- *  HERO
+ *  HERO - OVERDRIVE (kinetic typography)
+ *  A hero-scoped plasma field (hero-scene.js) floats over the stage
+ *  behind a staircase of Syne display lines whose weight breathes with
+ *  the cursor. The translucent atmosphere paints first; the canvas and
+ *  the proximity engine are progressive enhancements.
  * ==================================================================== */
-.hero { display: grid; gap: 1.5rem; align-content: center; min-height: var(--stage-h); }
-.hero h1 { max-width: 18ch; font-size: var(--fs-mega); font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; }
-/* the reveal animation clips vertically while the line slides in; the padding keeps descenders
-   (g, y, p) out of the clip zone once the animation has settled */
-.hero h1 .ln { display: block; overflow: hidden; padding-block-end: 0.08em; margin-block-end: -0.08em; }
-.hero h1 .ln > span { display: inline-block; will-change: transform; }
-.hero-sub { max-width: 46ch; font-size: var(--fs-md); color: var(--ink-dim); }
-.hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.hero-sec { position: relative; padding-block: clamp(2.5rem, 7vh, 5rem) clamp(3rem, 9vh, 6.5rem); }
+.hero-fx {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(120% 90% at 72% 10%, var(--lajvard-soft), transparent 60%),
+    radial-gradient(85% 65% at 15% 90%, var(--accent-soft), transparent 62%);
+}
+.hero-fx canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero-fx[data-hero-fx="off"] { display: none; }
 
-/* the hero's build console: the blog describes itself the way its CI pipeline does */
-.hero-console {
-  display: grid; gap: 0.3rem; max-width: 52ch;
-  font-family: var(--family-mono); font-size: var(--fs-sm); line-height: 1.5;
-  border-inline-start: 2px solid var(--edge-2);
-  padding-inline-start: 1rem;
+.hero-ov {
+  position: relative; display: grid; gap: 1.4rem; align-content: center;
+  min-height: calc(var(--stage-h) + 10vh);
 }
-.console-row { display: flex; align-items: baseline; gap: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.console-cmd { color: var(--ink); }
-.console-prompt { color: var(--accent); font-weight: 500; }
-.console-ok { color: var(--ok); }
-.console-dim { color: var(--ink-faint); }
-.console-glyph { flex: none; }
-.console-accent { color: var(--accent); }
-.console-caret {
-  display: inline-block; width: 0.55em; height: 1em; margin-inline-start: 0.15rem;
-  background: var(--accent); align-self: center;
-  animation: console-blink 1.1s steps(1) infinite;
+/* the diagonal: a hairline rule slashed behind the headline */
+.ov-rule {
+  position: absolute; inset-inline-start: -2%; inset-block-start: 24%;
+  width: 62%; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, var(--lajvard), var(--accent-soft) 55%, transparent);
+  transform: rotate(-4.5deg); transform-origin: left center; opacity: 0.9;
 }
-@keyframes console-blink { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .console-caret { animation: none; } }
-.readout { display: flex; flex-wrap: wrap; gap: 2rem 2.75rem; }
+[dir="rtl"] .ov-rule { transform: rotate(4.5deg); transform-origin: right center; }
+/* a quiet vertical signature on wide screens */
+.ov-side {
+  display: none; position: absolute; inset-inline-end: 0; inset-block-start: 27%;
+  writing-mode: vertical-rl; font-family: var(--family-mono);
+  font-size: var(--fs-2xs); letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+@media (min-width: 1200px) { .ov-side { display: block; } }
+
+.ov-title {
+  font-family: var(--family-display);
+  font-size: clamp(2.5rem, 8.4vw, 8.25rem);
+  line-height: 0.95; letter-spacing: -0.01em;
+  text-transform: uppercase; font-weight: 700; color: var(--ink);
+}
+/* the reveal animation clips vertically while a line slides in; the padding keeps
+   the caps out of the clip zone once the animation has settled */
+.ov-line {
+  display: block; overflow: hidden;
+  padding-block-end: 0.08em; margin-block-end: -0.08em;
+}
+/* the staircase: every line steps further right - the diagonal of the grid */
+.ov-line:nth-child(2) { padding-inline-start: clamp(0.5rem, 3.5vw, 3.5rem); }
+.ov-line:nth-child(3) { padding-inline-start: clamp(1rem, 7vw, 7rem); }
+.ov-line:nth-child(4) { padding-inline-start: clamp(1.5rem, 10.5vw, 10.5rem); }
+.ov-word { display: inline-block; white-space: nowrap; }
+.ov-char { display: inline-block; font-variation-settings: 'wght' var(--wght, 700); }
+/* the last line is inked as an outline and fills as the cursor approaches
+   (the per-char fill is driven by motion.js; without JS it stays outline) */
+.ov-line--ghost .ov-char {
+  color: transparent;
+  -webkit-text-stroke: max(1px, 0.013em) var(--ink);
+}
+@supports not (-webkit-text-stroke: 1px #fff) {
+  .ov-line--ghost .ov-char { color: var(--ink-dim); -webkit-text-stroke: 0; }
+}
+.hero-sub { max-width: 52ch; font-size: var(--fs-md); color: var(--ink-dim); }
+
+/* the ticker: what this machine actually is, quiet and endless */
+.ov-ticker {
+  max-width: 100%; overflow: hidden; padding-block: 0.6rem;
+  border-block: 1px solid var(--edge);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.ov-ticker-track { display: inline-flex; width: max-content; }
+.ov-ticker-run {
+  font-family: var(--family-mono); font-size: var(--fs-2xs); font-weight: 500;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint);
+  white-space: nowrap; padding-inline-end: 3.5rem;
+}
+
+.hero-cta { display: flex; flex-wrap: wrap; gap: 0.9rem 1.4rem; align-items: center; }
+.btn-ov {
+  position: relative; display: inline-flex; align-items: center; gap: 0.6rem;
+  min-height: 52px; padding-inline: 1.7rem; overflow: hidden;
+  font-family: var(--family-mono); font-size: var(--fs-xs); font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--accent); color: var(--ground);
+  border: 1px solid var(--accent);
+  box-shadow: 0 10px 34px -14px var(--accent-glow);
+  cursor: pointer; text-decoration: none;
+  transition: transform var(--d-2) var(--e-out), box-shadow var(--d-2) var(--e-out);
+}
+.btn-ov > * { position: relative; z-index: 1; }
+/* the sweep: a light sheet that wipes across on hover; text stays on accent */
+.btn-ov::after {
+  content: ""; position: absolute; inset-block-start: 0; inset-block-end: 0; inset-inline-start: 0;
+  width: 100%; z-index: 0;
+  background: linear-gradient(100deg, var(--accent-ink), var(--accent) 62%, var(--lajvard) 135%);
+  transform: translateX(-101%);
+  transition: transform 460ms var(--e-out);
+}
+[dir="rtl"] .btn-ov::after { transform: translateX(101%); }
+.btn-ov:hover::after, .btn-ov:focus-visible::after { transform: translateX(0); }
+.btn-ov:hover, .btn-ov:focus-visible { box-shadow: var(--el-glow); }
+.btn-ov:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.btn-ov:active { transform: translateY(1px); }
+.link-ov {
+  display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px;
+  font-family: var(--family-mono); font-size: var(--fs-xs); font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim);
+  text-decoration: none; border-block-end: 1px solid var(--edge-2); padding-block-end: 0.35rem;
+  transition: color var(--d-2) var(--e-out), border-color var(--d-2) var(--e-out);
+}
+.link-ov svg { transition: transform var(--d-2) var(--e-out); }
+.link-ov:hover, .link-ov:focus-visible { color: var(--accent); border-color: var(--accent); }
+.link-ov:hover svg { transform: translateX(4px); }
+[dir="rtl"] .link-ov:hover svg { transform: translateX(-4px); }
+.link-ov:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* metrics: Syne numerals over hairline-separated columns (zafaran = numerics) */
+.ov-readout {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block-start: 1px solid var(--edge); padding-block-start: 1.1rem;
+}
+.ov-readout > div { padding-inline-start: 1.2rem; border-inline-start: 1px solid var(--edge); }
+.ov-readout > div:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.ov-readout .metric {
+  font-family: var(--family-display);
+  font-variation-settings: 'wght' 800;
+  font-size: clamp(1.7rem, 2.6vw, 2.5rem);
+}
+.ov-readout .metric-label { margin-block-start: 0.55rem; }
+@media (max-width: 767px) {
+  .ov-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 1.1rem; }
+  .ov-readout > div:nth-child(3) { padding-inline-start: 0; border-inline-start: 0; }
+  .btn-ov { min-height: 48px; }
+}
+
+/* no motion runtime (reduced or unavailable): the plasma never runs, the
+   headline sits at its resting weight, the stage atmosphere stays */
+html[data-motion="reduced"] .hero-fx,
+html[data-motion="unavailable"] .hero-fx { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-fx { display: none; }
+  .ov-title .ov-char { font-variation-settings: 'wght' 700; }
+  .link-ov:hover svg { transform: none; }
+}
 .hud {
   position: fixed; inset-block-end: 1rem; inset-inline-end: 1rem; z-index: 55;
   display: flex; align-items: center; gap: 0.6rem;
@@ -626,7 +740,6 @@ a[data-node]:focus-visible .gring { stroke: var(--accent); }
  *  HERO META - the right rail: a small data readout that gives the hero
  *  something to say beyond the headline. Desktop only; hairline frames.
  * -------------------------------------------------------------------- */
-.hero { position: relative; }
 .hero-meta {
   display: none;
   position: absolute;
@@ -638,10 +751,9 @@ a[data-node]:focus-visible .gring { stroke: var(--accent); }
   text-transform: uppercase;
   color: var(--ink-faint);
   text-align: end;
-  display: grid;
   gap: 0.4rem;
 }
-@media (max-width: 1023px) { .hero-meta { display: none; } }
+@media (min-width: 1024px) { .hero-meta { display: grid; } }
 .hero-meta b { color: var(--ink-dim); font-weight: 500; }
 
 /* -------------------------------------------------------------------- *

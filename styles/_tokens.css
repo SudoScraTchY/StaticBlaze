@@ -29,6 +29,13 @@
 @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("/assets/fonts/plex-mono-400.woff2") format("woff2"); }
 @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/assets/fonts/plex-mono-500.woff2") format("woff2"); }
 
+/* Display face: Syne variable, self-hosted. Hero display type only - the kinetic
+   headline breathes across the wght axis (400-800); body copy stays IBM Plex. */
+@font-face {
+  font-family: "Syne"; font-style: normal; font-weight: 400 800; font-display: swap;
+  src: url("/assets/fonts/syne-var.woff2") format("woff2");
+}
+
 /* Persian / Arabic script coverage: Vazirmatn variable, self-hosted. Script coverage only. */
 @font-face {
   font-family: "Vazirmatn"; font-style: normal; font-weight: 100 900; font-display: swap;
@@ -100,6 +107,7 @@
   --family-sans: "IBM Plex Sans", "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
   --family-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   --family-persian: "Vazirmatn", "IBM Plex Sans", ui-sans-serif, sans-serif;
+  --family-display: "Syne", "IBM Plex Sans", "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
 
   /* type scale, 7 steps. Display carries negative tracking; caps carry positive. */
   --fs-mega: clamp(2.75rem, 7vw, 6rem);
@@ -148,6 +156,7 @@
   --font-sans: var(--family-sans);
   --font-mono: var(--family-mono);
   --font-persian: var(--family-persian);
+  --font-display: var(--family-display);
 
   --text-mega: var(--fs-mega);
   --text-mega--line-height: 0.96;

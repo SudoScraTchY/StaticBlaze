@@ -9,12 +9,14 @@
   "wordmark": "mehrshad",
   "defaultAuthor": "mehrshad",
   "hero": {
-    "kicker": "engineer · tools · notes",
+    "kicker": "systems · software · notes",
     "lines": [
-      "Build the thing.",
-      "Write down what broke."
+      "Systems,",
+      "software,",
+      "& the space",
+      "between."
     ],
-    "sub": "Notes on .NET, Blazor, static sites, and the tools I keep rebuilding. Every post here is a folder of markdown that a console app turns into the page you are reading."
+    "sub": "What shipped, what broke, and what got rebuilt. Notes on .NET, Blazor, static sites, and tooling from an engineer who publishes the whole machine. The page you are reading is markdown, compiled."
   },
   "contact": {
     "endpoint": ""

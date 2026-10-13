@@ -1,11 +1,11 @@
 // Overdrive hero field - a hero-scoped plasma behind the landing headline.
 //
-// Loaded by dynamic import from motion.js only when [data-hero-canvas] exists
-// and motion is allowed. Contract (mirrors scene.js):
+// Loaded by dynamic import from motion.js. Contract (mirrors scene.js):
 //   - colours are read from the CSS tokens at runtime, never hard-coded
-//   - capability gates: reduced-motion, save-data, low memory, no WebGL,
-//     small viewports -> the canvas stays off and the CSS atmosphere carries
-//   - the frame loop runs only while the hero is on screen and the tab visible
+//   - reduced motion -> ONE static frame (a still image, not an animation)
+//   - other gates: save-data, low memory, no WebGL, small viewports -> off
+//   - the interactive frame loop runs only while the hero is on screen and
+//     the tab visible
 //   - opacity is owned HERE (scroll fade + intro fade) so nothing else tweens
 //     .hero-fx and nothing fights over the same property.
 
@@ -17,12 +17,10 @@ function off(host) {
 }
 
 function capabilities() {
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // reduced motion is handled in boot() as a static single frame, not a refusal
   const saveData = navigator.connection?.saveData === true;
   const lowMem = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 4;
   const narrow = window.matchMedia('(max-width: 640px)').matches;
-  if (reduced) return { ok: false, reason: 'reduced-motion' };
-  if (saveData) return { ok: false, reason: 'save-data' };
   const c = document.createElement('canvas');
   const gl = c.getContext('webgl2') || c.getContext('webgl');
   if (!gl) return { ok: false, reason: 'no-webgl' };
@@ -121,6 +119,7 @@ async function boot() {
   }
 
   const css = getComputedStyle(document.documentElement);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const uniforms = {
     uTime: { value: 0 },
     uRes: { value: new THREE.Vector2(1, 1) },
@@ -163,6 +162,16 @@ async function boot() {
     uniforms.uRes.value.set(w, h);
   };
   resize();
+
+  if (reduced) {
+    // one authored still of the field: the hero keeps its identity without motion
+    uniforms.uTime.value = 21.3;
+    renderer.render(scene, camera);
+    host.style.opacity = '1';
+    window.addEventListener('resize', () => { resize(); renderer.render(scene, camera); }, { passive: true });
+    return;
+  }
+
   window.addEventListener('resize', resize, { passive: true });
 
   const target = new THREE.Vector2(0, 0);

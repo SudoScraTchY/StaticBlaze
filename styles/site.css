@@ -517,12 +517,10 @@
   .btn-ov { min-height: 48px; }
 }
 
-/* no motion runtime (reduced or unavailable): the plasma never runs, the
-   headline sits at its resting weight, the stage atmosphere stays */
-html[data-motion="reduced"] .hero-fx,
-html[data-motion="unavailable"] .hero-fx { display: none; }
+/* reduced motion: no intro, no proximity, no marquee - but hero-scene paints
+   ONE static plasma frame so the section keeps its identity (a still image,
+   not motion). without JS the fx stays transparent and the stage carries. */
 @media (prefers-reduced-motion: reduce) {
-  .hero-fx { display: none; }
   .ov-title .ov-char { font-variation-settings: 'wght' 700; }
   .link-ov:hover svg { transform: none; }
 }

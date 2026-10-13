@@ -19,6 +19,12 @@
   const gsap = window.gsap;
   const ScrollTrigger = window.ScrollTrigger;
 
+  /* the landing hero's plasma field: imported BEFORE the motion gate so it can
+     still paint one static frame under reduced motion (hero-scene self-gates) */
+  if (document.querySelector('[data-hero-canvas]')) {
+    import('./hero-scene.js').catch(() => {});
+  }
+
   if (reduced || !gsap) {
     root.dataset.anim = 'off';
     root.dataset.motion = reduced ? 'reduced' : 'unavailable';
@@ -34,14 +40,6 @@
   const q = (s, c = document) => c.querySelector(s);
   const qa = (s, c = document) => [...c.querySelectorAll(s)];
   const fine = window.matchMedia('(pointer: fine)').matches;
-
-  /* the landing hero's plasma field: loaded only where the canvas exists */
-  if (q('[data-hero-canvas]')) {
-    import('./hero-scene.js').catch(() => {
-      const fxHost = q('[data-hero-fx]');
-      if (fxHost) fxHost.dataset.heroFx = 'off';
-    });
-  }
 
   /* ------------------------------------------------------------------ *
    *  1. HERO - OVERDRIVE (kinetic typography)

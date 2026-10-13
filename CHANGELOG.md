@@ -36,6 +36,15 @@ Notable changes to StaticBlaze, newest first. Dates are the merge date on `main`
   mean brightness ~0). Ribbons broadened, output raised ~5x, drift speed up, and the renderer
   now keeps its drawing buffer so the field is pixel-measurable (probe: 63% of the canvas
   emits light, mean brightness 46/255).
+- Reduced motion did not calm the hero, it erased it: the fx layer was display:none under
+  the reduced-motion CSS and the scene module never loaded, so a visitor with the OS
+  "show animations" setting off got none of the redesign (confirmed in a live browser pane
+  on the reporter's machine). hero-scene.js now paints ONE static plasma frame under
+  reduced motion (a still image, not an animation; 77% of the canvas lit in the probe),
+  and the module is imported before the motion gate. The kinetic systems themselves stay
+  fully off, as the motion contract requires. Probe matrix: normal mode (wght 700, plasma
+  63% lit, marquee running) and reduced mode (static frame, resting weight, no loop) both
+  green with zero console errors.
 
 **Gates**
 - dotnet build 0 errors; tests 27/27; tailwind, generation, `audit-site`, `check-crossengine`,

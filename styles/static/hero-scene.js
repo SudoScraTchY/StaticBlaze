@@ -13,7 +13,12 @@ const HOST_SEL = '[data-hero-fx]';
 const HERO_SEL = '.hero-sec';
 
 function off(host) {
-  if (host) host.dataset.heroFx = 'off';
+  // capability failure: drop only the canvas - the CSS atmosphere stays up,
+  // so the hero never loses its entire field on a limited device
+  if (host) {
+    host.dataset.heroFx = 'off';
+    host.style.opacity = '1';
+  }
 }
 
 function capabilities() {
